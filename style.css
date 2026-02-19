@@ -448,3 +448,64 @@ h1{
     max-width: 120px !important;
   }
 }
+
+/* ===== Car dropdown beside lock icon ===== */
+.row{
+  flex-wrap: nowrap;          /* กันแตกบรรทัด */
+}
+
+.car-select{
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  border-radius: 12px;
+  border: 1.8px solid rgba(223,205,128,.65);
+  background: rgba(0,0,0,.25);
+  color: var(--gold);
+  font-family: "Kanit", sans-serif;
+
+  font-weight: 400 !important;  /* ✅ บังคับ */
+}
+
+.car-select:focus{
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(223,205,128,.15);
+}
+
+/* option สีจะขึ้นกับ browser (iOS จะจัดของมันเอง) */
+.car-select option{
+  color: #000;
+}
+
+.car-select{
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  border-radius: 12px;
+  border: 1.8px solid rgba(223,205,128,.65);
+  background: rgba(0,0,0,.25);
+  color: var(--gold);
+  font-weight: 700;
+  font-family: "Kanit", sans-serif;
+  padding: 0 10px;
+  outline: none;
+}
+
+/* ===== Add Car button (Header - Style A) ===== */
+.addcar-btn{
+  margin-left: auto;                 /* ดันไปขวาสุดในแถวหัวข้อ */
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(223,205,128,.55);
+  background: rgba(223,205,128,.10);
+  color: var(--gold);
+  font-family: "Kanit", sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .06s ease, background .2s ease;
+}
+.addcar-btn:active{ transform: scale(.98); }
+.addcar-btn:hover{ background: rgba(223,205,128,.16); }
