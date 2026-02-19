@@ -35,17 +35,24 @@ function pointsToRank(totalPoints){
 
 // ---------- Sections ----------
 const sections = [
-  { id: "extream", count: 8 },
-  { id: "sport", count: 7 },
-  { id: "standard", count: 7 },
+  { id: "extream", count: 8, label: "Extream" },
+  { id: "sport", count: 7, label: "Sport" },
+  { id: "standard", count: 7, label: "Standard" },
 ];
 
+// ---------- Default cars by category ----------
+const defaultCars = {
+  extream: ["LaFerrari","Huayra BC","Ford GT","Centodieci","SVJ","Benz GT R","Chiron","Vulcan"],
+  sport: ["Reventon","Giulia","GT-R","XJ220","F-Type","NSX-R","4C Spider"],
+  standard: ["RX7","DB5","Emira","911 Carrera","Mach 1","Camaro Z/28","S15"],
+};
+
 // ---------- Storage ----------
-const STORAGE_KEY = "rm_rank_calc_v1";
+const STORAGE_KEY = "rm_rank_calc_v4";
 
 function emptyState(){
   return {
-    bonus: 1400,
+    bonus: 1200,
     sections: {
       extream: Array(8).fill(""),
       sport: Array(7).fill(""),
@@ -55,6 +62,16 @@ function emptyState(){
       extream: Array(8).fill(false),
       sport: Array(7).fill(false),
       standard: Array(7).fill(false),
+    },
+    cars: { // เลือกรถต่อแถว
+      extream: Array(8).fill(""),
+      sport: Array(7).fill(""),
+      standard: Array(7).fill(""),
+    },
+    customCars: { // รถที่ผู้ใช้ Add เองต่อหมวด
+      extream: [],
+      sport: [],
+      standard: [],
     }
   };
 }
@@ -65,11 +82,13 @@ function loadState(){
     if (!raw) return emptyState();
     const parsed = JSON.parse(raw);
 
-    // กัน state เพี้ยน (เช็คความยาว)
     const base = emptyState();
+
     for (const s of ["extream","sport","standard"]){
       if (Array.isArray(parsed.sections?.[s])) base.sections[s] = parsed.sections[s].slice(0, base.sections[s].length);
       if (Array.isArray(parsed.locked?.[s])) base.locked[s] = parsed.locked[s].slice(0, base.locked[s].length);
+      if (Array.isArray(parsed.cars?.[s])) base.cars[s] = parsed.cars[s].slice(0, base.cars[s].length);
+      if (Array.isArray(parsed.customCars?.[s])) base.customCars[s] = parsed.customCars[s];
     }
     if (Number.isFinite(Number(parsed.bonus))) base.bonus = Number(parsed.bonus);
 
@@ -79,9 +98,11 @@ function loadState(){
   }
 }
 
+let STATE = loadState();
+
 function saveState(){
-  const state = collectStateFromUI();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  STATE = collectStateFromUI();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
 }
 
 function collectStateFromUI(){
@@ -90,21 +111,74 @@ function collectStateFromUI(){
   // bonus
   state.bonus = Number(document.getElementById("bonus").value) || 0;
 
-  // inputs + locked
+  // customCars (คงไว้จาก STATE ปัจจุบัน)
+  state.customCars = JSON.parse(JSON.stringify(STATE.customCars || emptyState().customCars));
+
+  // inputs + locked + cars
   for (const sec of sections){
     const rows = document.querySelectorAll(`#${sec.id} .row`);
     rows.forEach((r, idx) => {
-      const v = r.querySelector("input")?.value ?? "";
-      state.sections[sec.id][idx] = v;
+      state.sections[sec.id][idx] = r.querySelector("input")?.value ?? "";
       state.locked[sec.id][idx] = (r.dataset.locked === "true");
+      state.cars[sec.id][idx] = r.querySelector("select")?.value ?? "";
     });
   }
 
   return state;
 }
 
+// ---------- Cars helpers ----------
+function normName(s){ return String(s || "").trim(); }
+function lower(s){ return normName(s).toLowerCase(); }
+
+function getCarsForSection(sectionId){
+  const base = defaultCars[sectionId] || [];
+  const extra = (STATE.customCars?.[sectionId] || []);
+  const all = [...base, ...extra].map(normName).filter(Boolean);
+
+  // unique (case-insensitive)
+  const seen = new Set();
+  const out = [];
+  for (const n of all){
+    const k = lower(n);
+    if (!seen.has(k)){
+      seen.add(k);
+      out.push(n);
+    }
+  }
+  return out;
+}
+
+function buildSelectOptions(selectEl, sectionId, currentValue){
+  const cars = getCarsForSection(sectionId);
+
+  selectEl.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = "เลือกรถ...";
+  selectEl.appendChild(opt0);
+
+  cars.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    selectEl.appendChild(opt);
+  });
+
+  // restore value if still exists
+  const tryVal = normName(currentValue);
+  selectEl.value = cars.some(c => lower(c) === lower(tryVal)) ? cars.find(c => lower(c) === lower(tryVal)) : "";
+}
+
+function refreshSectionSelects(sectionId){
+  document.querySelectorAll(`#${sectionId} select.car-select`).forEach(sel => {
+    const cur = sel.value;
+    buildSelectOptions(sel, sectionId, cur);
+  });
+}
+
 // ---------- UI build ----------
-function makeRow(sectionId, idx, value, isLocked){
+function makeRow(sectionId, idx, value, isLocked, carValue){
   const wrap = document.createElement("div");
   wrap.className = "row";
   wrap.dataset.locked = isLocked ? "true" : "false";
@@ -126,6 +200,7 @@ function makeRow(sectionId, idx, value, isLocked){
   btn.addEventListener("click", () => {
     const locked = wrap.dataset.locked === "true";
     const nextLocked = !locked;
+
     wrap.dataset.locked = nextLocked ? "true" : "false";
     wrap.classList.toggle("locked", nextLocked);
 
@@ -133,10 +208,14 @@ function makeRow(sectionId, idx, value, isLocked){
     saveState();
   });
 
-  // ✅ Auto-save when typing
-  input.addEventListener("input", () => {
-    saveState();
-  });
+  // Dropdown car
+  const select = document.createElement("select");
+  select.className = "car-select";
+  buildSelectOptions(select, sectionId, carValue ?? "");
+  select.addEventListener("change", saveState);
+
+  // Auto-save when typing
+  input.addEventListener("input", saveState);
 
   // Enter = calculate
   input.addEventListener("keydown", (e) => {
@@ -145,7 +224,55 @@ function makeRow(sectionId, idx, value, isLocked){
 
   wrap.appendChild(input);
   wrap.appendChild(btn);
+  wrap.appendChild(select);
   return wrap;
+}
+
+function ensureAddButtons(){
+  sections.forEach(sec => {
+    const root = document.getElementById(sec.id);
+    if (!root) return;
+
+    const card = root.closest(".card");
+    if (!card) return;
+
+    const header = card.querySelector(".section-title");
+    if (!header) return;
+
+    // กันซ้ำ
+    if (header.querySelector(`[data-addcar="${sec.id}"]`)) return;
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "addcar-btn";
+    addBtn.dataset.addcar = sec.id;
+    addBtn.textContent = "+ Add";
+
+    addBtn.addEventListener("click", () => {
+      const msg = `เพิ่มชื่อรถในหมวด ${sec.label}\n(พิมพ์ชื่อรถ เช่น "Huracan STO")`;
+      const name = normName(prompt(msg, ""));
+      if (!name) return;
+
+      const current = STATE.customCars?.[sec.id] || [];
+      const exists =
+        getCarsForSection(sec.id).some(c => lower(c) === lower(name));
+
+      if (exists){
+        alert("มีชื่อนี้อยู่แล้วครับ ✅");
+        return;
+      }
+
+      // add + save + refresh dropdowns
+      if (!STATE.customCars) STATE.customCars = emptyState().customCars;
+      if (!Array.isArray(STATE.customCars[sec.id])) STATE.customCars[sec.id] = [];
+      STATE.customCars[sec.id].push(name);
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+      refreshSectionSelects(sec.id);
+    });
+
+    header.appendChild(addBtn);
+  });
 }
 
 function buildUIFromState(state){
@@ -156,7 +283,7 @@ function buildUIFromState(state){
   });
 
   // bonus
-  document.getElementById("bonus").value = state.bonus ?? 1400;
+  document.getElementById("bonus").value = state.bonus ?? 1200;
 
   // rows
   sections.forEach(sec => {
@@ -164,9 +291,12 @@ function buildUIFromState(state){
     for (let i=0;i<sec.count;i++){
       const v = state.sections?.[sec.id]?.[i] ?? "";
       const locked = !!state.locked?.[sec.id]?.[i];
-      root.appendChild(makeRow(sec.id, i, v, locked));
+      const car = state.cars?.[sec.id]?.[i] ?? "";
+      root.appendChild(makeRow(sec.id, i, v, locked, car));
     }
   });
+
+  ensureAddButtons();
 }
 
 // ---------- Calculation ----------
@@ -200,12 +330,12 @@ function calc(){
       `คำนวณจาก 1 ขั้น = ${STEP_POINTS} แต้ม • อยู่ใน "${r.hat}" ขั้นที่ ${r.stepInHat} / ${r.hatSteps}`;
 
     btn.classList.remove("is-loading");
-    saveState(); // เผื่อมีการแก้ไขโบนัสแล้วกดคำนวณ
+    saveState();
   }, 600);
 }
 
 function resetUnlocked(){
-  // ล้างเฉพาะช่องที่ไม่ล็อค
+  // ล้างเฉพาะช่องที่ไม่ล็อค (รถไม่ล้างตามที่เหมาะกับการใช้งานจริง)
   sections.forEach(sec => {
     document.querySelectorAll(`#${sec.id} .row`).forEach(r => {
       const locked = r.dataset.locked === "true";
@@ -215,7 +345,6 @@ function resetUnlocked(){
     });
   });
 
-  // reset result text
   document.getElementById("rankOut").textContent = "-";
   document.getElementById("totalOut").textContent = "รวมแต้ม: -";
   document.getElementById("detailOut").textContent =
@@ -225,8 +354,7 @@ function resetUnlocked(){
 }
 
 // ---------- Init ----------
-const state = loadState();
-buildUIFromState(state);
+buildUIFromState(STATE);
 
 // save bonus changes too
 document.getElementById("bonus").addEventListener("input", saveState);
@@ -235,5 +363,5 @@ document.getElementById("bonus").addEventListener("input", saveState);
 document.getElementById("calcBtn").addEventListener("click", calc);
 document.getElementById("resetBtn").addEventListener("click", resetUnlocked);
 
-// คำนวณทันทีจากค่าที่โหลดมา
+// First calc
 calc();
