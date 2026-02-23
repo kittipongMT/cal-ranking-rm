@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cal Ranking RM</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="wrap">
+    <h1>คำนวณแต้มจัดอันดับ</h1>
+
+    <div class="grid">
+
+      <div class="card section-card">
+        <div class="section-title">
+        Extream <span class="badge">8 ช่อง</span>
+        <button class="addcar-btn import-btn" type="button" data-import="extream">📷 Import</button>
+        </div>
+        <div class="inputs" id="extream"></div>
+      </div>
+
+      <div class="card section-card">
+        <div class="section-title">
+        Sport <span class="badge">7 ช่อง</span>
+        <button class="addcar-btn import-btn" type="button" data-import="sport">📷 Import</button>
+        </div>
+        <div class="inputs" id="sport"></div>
+      </div>
+
+      <div class="card section-card">
+        <div class="section-title">
+        Standard <span class="badge">7 ช่อง</span>
+        <button class="addcar-btn import-btn" type="button" data-import="standard">📷 Import</button>
+        </div>
+        <div class="inputs" id="standard"></div>
+      </div>
+
+      <div class="card tools-card">
+        <div class="section-title">สรุปผล <span class="badge">คำนวณ</span></div>
+
+        <div class="footer">
+          <div class="bonus-row">
+            <div class="bonus-left">
+              <div class="label">แต้มบวกพิเศษจากเกม</div>
+              <input id="bonus" class="bonus-input mono" type="number" value="1200" />
+            </div>
+
+            <div class="btns">
+              <button class="btn btn-primary" id="calcBtn">คำนวณ</button>
+              <button class="btn btn-ghost" id="resetBtn">Reset</button>
+            </div>
+          </div>
+
+          <div class="result">
+            <div class="line1">
+              <h2>ผลลัพธ์แรงค์</h2>
+              <div id="totalOut">รวมแต้ม: -</div>
+            </div>
+            <div class="big" id="rankOut">-</div>
+            <div class="sub" id="detailOut"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+<!-- SVG Icons -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="ico-lock" viewBox="0 0 24 24">
+    <path fill="currentColor"
+      d="M17 10h-1V8a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Zm-7-2a2 2 0 1 1 4 0v2h-4V8Zm3.5 9.73V19h-3v-1.27a2 2 0 1 1 3 0Z"/>
+  </symbol>
+
+  <symbol id="ico-unlock" viewBox="0 0 24 24">
+    <path fill="currentColor"
+      d="M17 10h-7V8a2 2 0 1 1 4 0h2a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Zm-4.5 7.73V19h-3v-1.27a2 2 0 1 1 3 0Z"/>
+  </symbol>
+</svg>
+
+<!-- ✅ hidden input สำหรับเลือกรูป -->
+<input id="imgFile" type="file" accept="image/*" style="display:none" />
+
+<!-- ✅ 1) ต้องโหลด tesseract ก่อน -->
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<!-- ✅ 2) แล้วค่อยโหลดไฟล์ของเรา -->
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/cars.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ocr.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

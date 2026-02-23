@@ -1,0 +1,531 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap');
+
+:root{
+  --bg:#000;
+  --gold:#dfcd80;
+  --white:#fff;
+  --text:#eaeaea;
+  --muted:#a9a9a9;
+  --inputText:#000;
+  --card:#0b0b0b;
+  --card2:#101010;
+  --shadow: 0 10px 30px rgba(0,0,0,.55);
+  --radius: 18px;
+}
+
+*{ box-sizing:border-box; }
+
+html, body{ height: 100%; }
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Kanit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:16px 14px 18px;
+
+  /* ✅ สำคัญ: iPhone เลื่อนได้ */
+  overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wrap{
+  width:min(1320px, 100%);
+  min-height: 100%;
+  display:flex;
+  flex-direction:column;
+}
+
+h1{
+  margin:6px 0 12px;
+  text-align:center;
+  color:var(--gold);
+  font-size:26px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+
+/* grid */
+.grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+}
+
+/* card */
+.card{
+  background:linear-gradient(180deg, var(--card), var(--card2));
+  border:1px solid rgba(223,205,128,.22);
+  box-shadow:var(--shadow);
+  border-radius:var(--radius);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.section-title{
+  color:var(--gold);
+  font-weight:700;
+  font-size:17px;
+  margin:0 0 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex: 0 0 auto;
+}
+
+.badge{
+  font-size:12px;
+  color:#000;
+  background:var(--gold);
+  border-radius:999px;
+  padding:2px 10px;
+  font-weight:700;
+}
+
+/* ✅ Inputs list */
+.inputs{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+  min-height:0;
+}
+
+/* row */
+.row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+/* ✅ ช่องใส่เลข: สั้นลง + เลขอยู่กลาง */
+.num{
+  width: 165px;           /* ✅ สั้นลง (พอดีเลข 4 หลัก) */
+  max-width: 100%;
+  height:44px;
+  border-radius:12px;
+  border:2px solid var(--gold);
+  background:var(--white);
+  color:var(--inputText);
+  font-weight:800;
+  font-size:16px;
+  padding:0 12px;
+  outline:none;
+
+  text-align:center;      /* ✅ เลขอยู่กลาง */
+}
+.num::placeholder{ color:#888; font-weight:600; text-align:center; }
+
+.icon-btn{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.20);
+  background:transparent;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+  flex: 0 0 auto;
+}
+.icon-btn:active{ transform: scale(.97); }
+.icon-btn:hover{ background: rgba(255,255,255,.06); }
+
+.icon{
+  width:20px;
+  height:20px;
+  color:#fff;      /* ✅ สำคัญ: currentColor จะใช้บรรทัดนี้ */
+  fill:currentColor;
+  opacity:.9;
+}
+
+.locked .icon-btn{
+  border-color: rgba(223,205,128,.65);
+  background: rgba(223,205,128,.12);
+}
+.locked .icon{
+  color: var(--gold);  /* ✅ ตอนล็อคเป็นสีทอง */
+  opacity: 1;
+}
+
+/* footer/tools */
+.footer{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:0;
+}
+
+.bonus-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  padding:12px;
+  border-radius:16px;
+  border:1px dashed rgba(223,205,128,.35);
+  background: rgba(255,255,255,.04);
+}
+
+.bonus-left{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex: 1 1 auto;
+  min-width: 220px;
+}
+
+.label{
+  color:var(--gold);
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.bonus-input{
+  width:140px;
+  height:42px;
+  border-radius:12px;
+  border:2px solid var(--gold);
+  background:var(--white);
+  color:var(--inputText);
+  font-weight:800;
+  font-size:16px;
+  padding:0 12px;
+  outline:none;
+  text-align:center;
+}
+
+.btns{
+  display:flex;
+  gap:10px;
+  flex: 0 0 auto;
+  width:100%;
+}
+
+.btn{
+  flex:1;
+  height:46px;
+  border-radius:14px;
+  border:0;
+  cursor:pointer;
+  font-family:"Kanit", sans-serif;
+  font-weight:800;
+  font-size:16px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .06s ease, filter .15s ease;
+}
+.btn:active{ transform: scale(.985); }
+
+.btn-primary{
+  background: var(--gold);
+  color:#000;
+}
+.btn-primary:hover{ filter: brightness(1.03); }
+
+.btn-ghost{
+  background: transparent;
+  color: var(--gold);
+  border:1px solid rgba(223,205,128,.55);
+}
+.btn-ghost:hover{ background: rgba(223,205,128,.08); }
+
+.result{
+  border-radius:18px;
+  padding:14px;
+  border:1px solid rgba(223,205,128,.25);
+  background: rgba(255,255,255,.04);
+}
+
+.result .line1{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:baseline;
+}
+
+.result h2{
+  margin:0;
+  font-size:18px;
+  color:var(--gold);
+  font-weight:800;
+}
+
+.mono{
+  font-variant-numeric: tabular-nums;
+  letter-spacing:.2px;
+}
+.big{
+  margin-top:6px;
+  font-size:22px;
+  font-weight:800;
+  color:#fff;
+}
+.sub{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+}
+
+/* ✅ iPad/จอใหญ่: 4 คอลัมน์ + พยายามให้อยู่หน้าเดียว */
+@media (min-width: 1024px){
+  body{
+    /* ✅ บน iPad ให้หน้าหลักไม่ค่อยเลื่อน (เลื่อนในกล่องแทน) */
+    overflow: hidden;
+  }
+
+  .wrap{
+    height: 100%;
+  }
+
+  .grid{
+    grid-template-columns: repeat(4, 1fr);
+    flex:1;
+    min-height:0;
+  }
+
+  .card{
+    height: calc(100vh - 86px);
+  }
+
+  /* ✅ ให้รายการช่องเลื่อนภายในการ์ด */
+  .section-card .inputs,
+  #extream, #sport, #standard{
+    overflow:auto;
+    padding-right:4px;
+  }
+
+  #extream::-webkit-scrollbar,
+  #sport::-webkit-scrollbar,
+  #standard::-webkit-scrollbar{
+    width: 8px;
+  }
+  #extream::-webkit-scrollbar-thumb,
+  #sport::-webkit-scrollbar-thumb,
+  #standard::-webkit-scrollbar-thumb{
+    background: rgba(223,205,128,.25);
+    border-radius: 999px;
+  }
+
+  .tools-card{
+    min-width: 320px;
+  }
+}
+
+/* ✅ iPhone/จอเล็ก: 2 คอลัมน์หรือ 1 คอลัมน์ให้เลื่อนสบาย */
+@media (max-width: 520px){
+  .num{ width: 155px; } /* ย่ออีกนิดบน iPhone */
+}
+
+/* ====== TIGHTER INPUT WIDTH (make Summary column wider) ====== */
+:root{
+  --numW: 132px;     /* ✅ ความกว้างช่องเลข (สั้นลงอีก) */
+  --btnS: 40px;      /* ✅ ขนาดปุ่มล็อค (เล็กลงนิด) */
+  --rowGap: 6px;     /* ✅ ระยะห่างช่องกับปุ่ม */
+}
+
+/* ช่องใส่เลขสั้นลง + ยังอยู่กลางเหมือนเดิม */
+.num{
+  width: var(--numW) !important;
+  padding: 0 10px !important;
+  text-align: center !important;
+}
+
+/* แถวชิดขึ้น */
+.row{
+  gap: var(--rowGap) !important;
+}
+
+/* ปุ่มล็อคเล็กลง */
+.icon-btn{
+  width: var(--btnS) !important;
+  height: var(--btnS) !important;
+  border-radius: 12px !important;
+}
+
+/* ไอคอนเล็กลงนิดให้บาลานซ์ */
+.icon{
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* iPhone เล็กมาก ลดอีกนิด */
+@media (max-width: 520px){
+  :root{
+    --numW: 122px;
+    --btnS: 38px;
+  }
+}
+
+/* ✅ FIX: bonus input not overflow */
+.bonus-row{
+  flex-wrap: nowrap;     /* กันแตกบรรทัดแล้วดันล้น */
+  gap: 10px;
+}
+
+.bonus-left{
+  min-width: 0;          /* ✅ สำคัญ: อนุญาตให้หดตัวได้ */
+}
+
+.bonus-input{
+  width: 120px !important;  /* ✅ สั้นลงให้พอดี (ปรับเป็น 110 ได้ถ้ายังแน่น) */
+  max-width: 120px !important;
+  text-align: center;
+}
+
+@media (max-width: 520px){
+  .bonus-row{
+    flex-wrap: wrap;     /* มือถือให้แตกบรรทัดได้ จะไม่ล้น */
+  }
+  .bonus-input{
+    width: 110px !important;
+    max-width: 110px !important;
+  }
+}
+
+/* ✅ Loading effect on Calculate button */
+.btn.is-loading{
+  position: relative;
+  pointer-events: none;
+  opacity: .95;
+}
+
+.btn.is-loading::after{
+  content:"";
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,.35);
+  border-top-color: rgba(0,0,0,.85);
+  border-radius: 999px;
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: middle;
+  animation: spin .75s linear infinite;
+}
+
+@keyframes spin{
+  to{ transform: rotate(360deg); }
+}
+
+/* ✅ FIX: Summary row layout (no overlap) */
+.tools-card .bonus-row{
+  display: grid !important;
+  grid-template-columns: 1fr !important;  /* เรียงเป็น 2 แถว */
+  gap: 12px !important;
+  align-items: stretch !important;
+}
+
+.tools-card .bonus-left{
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+
+.tools-card .btns{
+  width: 100% !important;                 /* ปุ่มเต็มแถว */
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+/* ✅ กันช่องโบนัสล้น + ให้พอดีขอบ */
+.tools-card .bonus-input{
+  width: 110px !important;
+  max-width: 110px !important;
+}
+
+/* (ถ้าจอใหญ่มากค่อยขยายช่องโบนัสขึ้นนิด) */
+@media (min-width: 1200px){
+  .tools-card .bonus-input{
+    width: 120px !important;
+    max-width: 120px !important;
+  }
+}
+
+/* ===== Car dropdown beside lock icon ===== */
+.row{
+  flex-wrap: nowrap;          /* กันแตกบรรทัด */
+}
+
+.car-select{
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  border-radius: 12px;
+  border: 1.8px solid rgba(223,205,128,.65);
+  background: rgba(0,0,0,.25);
+  color: var(--gold);
+  font-family: "Kanit", sans-serif;
+
+  font-weight: 400 !important;  /* ✅ บังคับ */
+}
+
+.car-select:focus{
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(223,205,128,.15);
+}
+
+/* option สีจะขึ้นกับ browser (iOS จะจัดของมันเอง) */
+.car-select option{
+  color: #000;
+}
+
+.car-select{
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  border-radius: 12px;
+  border: 1.8px solid rgba(223,205,128,.65);
+  background: rgba(0,0,0,.25);
+  color: var(--gold);
+  font-weight: 700;
+  font-family: "Kanit", sans-serif;
+  padding: 0 10px;
+  outline: none;
+}
+
+/* ===== Add Car button (Header - Style A) ===== */
+.addcar-btn{
+  margin-left: auto;                 /* ดันไปขวาสุดในแถวหัวข้อ */
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(223,205,128,.55);
+  background: rgba(223,205,128,.10);
+  color: var(--gold);
+  font-family: "Kanit", sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .06s ease, background .2s ease;
+}
+.addcar-btn:active{ transform: scale(.98); }
+.addcar-btn:hover{ background: rgba(223,205,128,.16); }
+
+/* OCR Import button (ใช้สไตล์เดียวกับ Add) */
+.import-btn{
+  margin-left: 8px;
+  opacity: .95;
+}
+
+/* Edit name button (ดินสอ) */
+.edit-btn{
+  width: var(--btnS) !important;
+  height: var(--btnS) !important;
+  border-radius: 12px;
+  border: 1px solid rgba(223,205,128,.55);
+  background: rgba(223,205,128,.10);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.edit-btn:active{ transform: scale(.97); }
