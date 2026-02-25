@@ -16,14 +16,15 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ✅ 1) ใส่ config ของคุณตรงนี้ (อันเดิมที่คุณใช้ login ได้)
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "PUT_YOUR_API_KEY_HERE",
-  authDomain: "PUT_YOUR_AUTH_DOMAIN_HERE",
-  projectId: "PUT_YOUR_PROJECT_ID_HERE",
-  storageBucket: "PUT_YOUR_BUCKET_HERE",
-  messagingSenderId: "PUT_YOUR_SENDER_ID_HERE",
-  appId: "PUT_YOUR_APP_ID_HERE"
+  apiKey: "AIzaSyBsfan9ZXraevVDpTe8q1GL7DkfUER0wc0",
+  authDomain: "cal-ranking-rm.firebaseapp.com",
+  projectId: "cal-ranking-rm",
+  storageBucket: "cal-ranking-rm.firebasestorage.app",
+  messagingSenderId: "937306488262",
+  appId: "1:937306488262:web:4428898ff1903d6ffd46c7",
+  measurementId: "G-13CK76G4Q7"
 };
 
 const app = initializeApp(firebaseConfig);
