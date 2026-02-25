@@ -8,9 +8,10 @@ import { sections } from './config'
 import logoUrl from './images/image.png'
 import type { SectionId } from './config'
 import type { AppState, CalcResult } from './types'
-import { loadState, saveStateToStorage, emptyState } from './lib/storage'
+import { loadState, saveStateToStorage, emptyState, normalizeState } from './lib/storage'
 import { pointsToRank } from './lib/calc'
-import { importScreenshot } from './lib/ocr'
+import { importScreenshot, matchCarName } from './lib/ocr'
+import { getCarsForSection } from './lib/cars'
 import {
   signInGoogle,
   signOutUser,
@@ -32,6 +33,16 @@ export default function App() {
     points: string[]
     badgeRightEdges: (number | null)[]
   } | null>(null)
+
+  // Keep last debug data per section so users can re-open after closing
+  const [savedDebug, setSavedDebug] = useState<
+    Partial<Record<SectionId, {
+      imageUrl: string
+      sectionId: SectionId
+      points: string[]
+      badgeRightEdges: (number | null)[]
+    }>>
+  >({})
 
   const userRef = useRef<User | null>(null)
   userRef.current = user
@@ -80,9 +91,17 @@ export default function App() {
     setState((prev) => {
       const next = { ...prev }
       next.sections = { ...prev.sections }
+      next.cars = { ...prev.cars }
+      next.ocrCars = { ...(prev.ocrCars ?? {}) }
       for (const sec of sections) {
         next.sections[sec.id] = prev.sections[sec.id].map((v, i) =>
           prev.locked[sec.id][i] ? v : ''
+        )
+        next.cars[sec.id] = prev.cars[sec.id].map((v, i) =>
+          prev.locked[sec.id][i] ? v : ''
+        )
+        next.ocrCars[sec.id] = (prev.ocrCars?.[sec.id] ?? []).map((v, i) =>
+          prev.locked[sec.id][i] ? v : false
         )
       }
       return next
@@ -95,22 +114,44 @@ export default function App() {
     if (importingSection) return
     setImportingSection(sectionId)
     try {
-      const { points, debugLog, imageUrl, badgeRightEdges } = await importScreenshot(sectionId, () => {})
+      const { points, carNames, debugLog, imageUrl, badgeRightEdges } = await importScreenshot(sectionId, () => {})
       if (!points.length) return
 
       setState((prev) => {
         const arr = [...prev.sections[sectionId]]
         points.forEach((p, i) => { if (i < arr.length) arr[i] = p })
+
+        // Apply detected car names (mark as OCR-imported)
+        const carsArr = [...prev.cars[sectionId]]
+        const ocrArr = [...(prev.ocrCars?.[sectionId] ?? [])]
+        const knownCars = getCarsForSection(sectionId, prev)
+        carNames.forEach((name, i) => {
+          if (i < carsArr.length) {
+            const matched = matchCarName(name, knownCars)
+            if (matched) {
+              carsArr[i] = matched
+              ocrArr[i] = true
+            }
+          }
+        })
         const next: AppState = {
           ...prev,
           sections: { ...prev.sections, [sectionId]: arr },
+          cars: { ...prev.cars, [sectionId]: carsArr },
+          ocrCars: { ...prev.ocrCars, [sectionId]: ocrArr },
         }
         setTimeout(() => calc(next), 400)
         return next
       })
 
       // Show debug modal always so user can verify boxes
-      setDebugModal({ imageUrl, sectionId, points, badgeRightEdges })
+      const debugData = { imageUrl, sectionId, points, badgeRightEdges }
+      setDebugModal(debugData)
+      // Save for re-open — revoke old URL for this section first
+      setSavedDebug((prev) => {
+        if (prev[sectionId]) URL.revokeObjectURL(prev[sectionId]!.imageUrl)
+        return { ...prev, [sectionId]: debugData }
+      })
 
       const ok = points.filter(Boolean).length
       const failedSlots = points
@@ -137,9 +178,10 @@ export default function App() {
       try {
         const cloudState = await loadCloudState(u)
         if (cloudState) {
-          setStateRaw(cloudState)
-          saveStateToStorage(cloudState)
-          calc(cloudState)
+          const normalized = normalizeState(cloudState)
+          setStateRaw(normalized)
+          saveStateToStorage(normalized)
+          calc(normalized)
         } else {
           // push local state to cloud
           saveStateDebounced(u, state)
@@ -191,6 +233,8 @@ export default function App() {
               onStateChange={setState}
               onImport={handleImport}
               onCalc={() => calc()}
+              hasDebug={!!savedDebug[sec.id]}
+              onShowDebug={() => savedDebug[sec.id] && setDebugModal(savedDebug[sec.id]!)}
             />
           ))}
         </div>
@@ -215,10 +259,7 @@ export default function App() {
           sectionId={debugModal.sectionId}
           points={debugModal.points}
           badgeRightEdges={debugModal.badgeRightEdges}
-          onClose={() => {
-            URL.revokeObjectURL(debugModal.imageUrl)
-            setDebugModal(null)
-          }}
+          onClose={() => setDebugModal(null)}
         />
       )}
     </div>

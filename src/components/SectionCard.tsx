@@ -1,6 +1,6 @@
 // src/components/SectionCard.tsx
 import { useState } from 'react'
-import { CameraIcon } from './icons'
+import { CameraIcon, EyeIcon } from './icons'
 import CarRow from './CarRow'
 import CarDialog from './CarDialog'
 import { getCarsForSection, lower, normName } from '../lib/cars'
@@ -13,9 +13,11 @@ interface SectionCardProps {
   badgeText: string
   state: AppState
   isImporting: boolean
+  hasDebug: boolean
   onStateChange: (updater: (prev: AppState) => AppState) => void
   onImport: (sectionId: SectionId) => void
   onCalc: () => void
+  onShowDebug: () => void
 }
 
 export default function SectionCard({
@@ -24,9 +26,11 @@ export default function SectionCard({
   badgeText,
   state,
   isImporting,
+  hasDebug,
   onStateChange,
   onImport,
   onCalc,
+  onShowDebug,
 }: SectionCardProps) {
   const [addOpen, setAddOpen] = useState(false)
 
@@ -80,6 +84,21 @@ export default function SectionCard({
         <span className="text-[12px] text-black bg-[#dfcd80] rounded-full px-[10px] py-[2px] font-bold">
           {badgeText}
         </span>
+        {hasDebug && (
+          <button
+            type="button"
+            onClick={onShowDebug}
+            title="ดู OCR Debug"
+            className="flex items-center gap-1 h-6 px-[8px] rounded-full
+              border border-[rgba(120,200,255,0.4)] bg-[rgba(120,200,255,0.08)]
+              text-sky-400 text-[11px] cursor-pointer
+              hover:bg-[rgba(120,200,255,0.18)] hover:border-[rgba(120,200,255,0.65)]
+              active:scale-[0.97] transition-all"
+          >
+            <EyeIcon />
+            ดูรูปที่อัพโหลด
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setAddOpen(true)}
@@ -138,6 +157,7 @@ export default function SectionCard({
             value={val}
             isLocked={locked[i]}
             carValue={cars[i]}
+            isOcrCar={!!(state.ocrCars?.[sectionId]?.[i])}
             state={state}
             onValueChange={(v) => updateSection(i, 'sections', v)}
             onToggleLock={() => updateSection(i, 'locked', !locked[i])}

@@ -7,6 +7,8 @@ export interface AppState {
   locked: Record<SectionId, boolean[]>
   cars: Record<SectionId, string[]>
   customCars: Record<SectionId, string[]>
+  /** Slots whose car name was set by OCR import — cannot be edited manually */
+  ocrCars: Record<SectionId, boolean[]>
 }
 
 export interface RankResult {

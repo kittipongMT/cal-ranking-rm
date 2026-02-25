@@ -14,6 +14,7 @@ interface CarRowProps {
   value: string
   isLocked: boolean
   carValue: string
+  isOcrCar: boolean
   state: AppState
   onValueChange: (val: string) => void
   onToggleLock: () => void
@@ -28,6 +29,7 @@ export default function CarRow({
   value,
   isLocked,
   carValue,
+  isOcrCar,
   state,
   onValueChange,
   onToggleLock,
@@ -94,47 +96,67 @@ export default function CarRow({
           </Tooltip.Portal>
         </Tooltip.Root>
 
-        {/* Car select */}
-        <CarSelect
-          value={carValue}
-          onChange={onCarChange}
-          options={cars}
-        />
-
-        {/* Edit car name button */}
-        <Tooltip.Root>
-          <Tooltip.Trigger asChild>
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="w-10 h-10 flex-shrink-0 rounded-xl border border-[rgba(223,205,128,0.55)]
-                bg-[rgba(223,205,128,0.10)] text-[#dfcd80]
-                flex items-center justify-center cursor-pointer
-                hover:bg-[rgba(223,205,128,0.18)] active:scale-[0.97] transition-all"
-            >
-              <PencilIcon />
-            </button>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              className="bg-zinc-800 text-zinc-200 text-xs rounded-lg px-2 py-1 shadow-lg"
-              sideOffset={4}
-            >
-              แก้ชื่อรถ / เพิ่มชื่อใหม่
-              <Tooltip.Arrow className="fill-zinc-800" />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-
-        {/* Edit dialog */}
-        <CarDialog
-          open={editOpen}
-          title="แก้ชื่อรถ"
-          label="พิมพ์ชื่อรถที่ต้องการ (จะเพิ่มเข้า dropdown ถ้ายังไม่มี)"
-          defaultValue={carValue}
-          onConfirm={handleEditConfirm}
-          onCancel={() => setEditOpen(false)}
-        />
+        {/* Car name — readonly label if OCR-imported, otherwise editable select + pencil */}
+        {isOcrCar ? (
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <div className="flex-1 min-w-0 h-10 rounded-xl border border-[rgba(223,205,128,0.35)]
+                bg-[rgba(223,205,128,0.06)] text-[#dfcd80] text-sm font-semibold
+                flex items-center px-3 overflow-hidden cursor-default select-none">
+                <span className="truncate">{carValue || `รถ #${index + 1}`}</span>
+                <span className="ml-auto text-[10px] text-[#dfcd80]/40 flex-shrink-0 pl-2">OCR</span>
+              </div>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                className="bg-zinc-800 text-zinc-200 text-xs rounded-lg px-2 py-1 shadow-lg"
+                sideOffset={4}
+              >
+                ชื่อรถจาก OCR — ไม่สามารถแก้ไขได้
+                <Tooltip.Arrow className="fill-zinc-800" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        ) : (
+          <>
+            <CarSelect
+              value={carValue}
+              onChange={onCarChange}
+              options={cars}
+            />
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="w-10 h-10 flex-shrink-0 rounded-xl border border-[rgba(223,205,128,0.55)]
+                    bg-[rgba(223,205,128,0.10)] text-[#dfcd80]
+                    flex items-center justify-center cursor-pointer
+                    hover:bg-[rgba(223,205,128,0.18)] active:scale-[0.97] transition-all"
+                >
+                  <PencilIcon />
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="bg-zinc-800 text-zinc-200 text-xs rounded-lg px-2 py-1 shadow-lg"
+                  sideOffset={4}
+                >
+                  แก้ชื่อรถ / เพิ่มชื่อใหม่
+                  <Tooltip.Arrow className="fill-zinc-800" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+            <CarDialog
+              open={editOpen}
+              title="แก้ชื่อรถ"
+              label="พิมพ์ชื่อรถที่ต้องการ (จะเพิ่มเข้า dropdown ถ้ายังไม่มี)"
+              defaultValue={carValue}
+              onConfirm={handleEditConfirm}
+              onCancel={() => setEditOpen(false)}
+            />
+          </>
+        )}
       </div>
     </Tooltip.Provider>
   )

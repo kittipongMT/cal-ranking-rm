@@ -1,5 +1,5 @@
 // src/lib/ocr.ts
-import { OCR_BOXES } from '../config'
+import { OCR_BOXES, OCR_CAR_NAME_BOXES, defaultCars } from '../config'
 import type { SectionId } from '../config'
 
 /** Extract the best 4-digit score (1000–9999) from OCR text */
@@ -71,6 +71,76 @@ function findBadgeRightEdge(
   return rightmostPurpleCol >= 0 ? sx + rightmostPurpleCol : null
 }
 
+/**
+ * Crop a text region and preprocess for Tesseract (white text on dark bg → dark text on white bg).
+ */
+function buildTextCanvas(
+  img: HTMLImageElement,
+  sx: number, sy: number, sw: number, sh: number
+): HTMLCanvasElement {
+  const canvas = document.createElement('canvas')
+  const scale = 3
+  canvas.width = sw * scale
+  canvas.height = sh * scale
+  const ctx = canvas.getContext('2d')!
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+
+  const im = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const d = im.data
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114
+    // Invert: bright pixels (white game text) → black; dark bg → white
+    const v = gray > 130 ? 0 : 255
+    d[i] = d[i + 1] = d[i + 2] = v
+    d[i + 3] = 255
+  }
+  ctx.putImageData(im, 0, 0)
+  return canvas
+}
+
+/**
+ * Match OCR text against a list of known car names.
+ * Returns the best match if similarity is high enough, otherwise the raw cleaned text.
+ */
+export function matchCarName(ocrText: string, knownCars: string[]): string {
+  // Keep Thai, English, digits, spaces, dash, slash
+  const clean = ocrText.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9\s\-\/]/g, '').trim()
+  if (!clean) return ''
+  const cleanLow = clean.toLowerCase()
+
+  // Exact match
+  const exact = knownCars.find((c) => c.toLowerCase() === cleanLow)
+  if (exact) return exact
+
+  // Contains match (OCR contains car name substring or vice versa)
+  const contains = knownCars.find(
+    (c) => cleanLow.includes(c.toLowerCase()) || c.toLowerCase().includes(cleanLow)
+  )
+  if (contains) return contains
+
+  // Best overlap score
+  let bestScore = 0
+  let bestCar = ''
+  for (const car of knownCars) {
+    const carLow = car.toLowerCase()
+    let common = 0
+    for (const ch of cleanLow) {
+      if (carLow.includes(ch)) common++
+    }
+    const score = common / Math.max(cleanLow.length, carLow.length)
+    if (score > bestScore) {
+      bestScore = score
+      bestCar = car
+    }
+  }
+  // Only accept if >60% similar — empty string if no match
+  return bestScore >= 0.6 ? bestCar : ''
+}
+
 function fileToImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
@@ -134,6 +204,8 @@ async function ocrCanvas(
 
 export interface OcrResult {
   points: string[]
+  /** Raw OCR text for each car name slot */
+  carNames: string[]
   debugLog: string[]
   imageUrl: string
   /** badgeRightEdges[i] = absolute x pixel where badge ends for box i (null if not found) */
@@ -157,7 +229,7 @@ export async function importScreenshot(
     fileInput.onchange = async () => {
       const file = fileInput.files?.[0]
       document.body.removeChild(fileInput)
-      if (!file) { resolve({ points: [], debugLog: [], imageUrl: '', badgeRightEdges: [] }); return }
+      if (!file) { resolve({ points: [], carNames: [], debugLog: [], imageUrl: '', badgeRightEdges: [] }); return }
 
       const imageUrl = URL.createObjectURL(file)
       try {
@@ -167,6 +239,7 @@ export async function importScreenshot(
         await worker.setParameters({ tessedit_char_whitelist: '0123456789' })
 
         const points: string[] = []
+        const carNames: string[] = []
         const debugLog: string[] = []
         const badgeRightEdges: (number | null)[] = []
 
@@ -209,8 +282,27 @@ export async function importScreenshot(
           onProgress(Math.round(((i + 1) / boxes.length) * 100))
         }
 
+        // --- Car name OCR ---
+        const nameBoxes = OCR_CAR_NAME_BOXES[sectionId]
+        if (nameBoxes?.length) {
+          const nameWorker = await createWorker('eng')
+          for (let i = 0; i < nameBoxes.length; i++) {
+            const [bx, by, bw, bh] = nameBoxes[i].pointBox
+            const sx = Math.round(img.naturalWidth * bx)
+            const sy = Math.round(img.naturalHeight * by)
+            const sw = Math.max(1, Math.round(img.naturalWidth * bw))
+            const sh = Math.max(1, Math.round(img.naturalHeight * bh))
+            const canvas = buildTextCanvas(img, sx, sy, sw, sh)
+            const raw = await ocrCanvas(canvas, nameWorker)
+            // Only set if matched to a known car name — otherwise leave blank
+            const matched = matchCarName(raw.trim(), defaultCars[sectionId] ?? [])
+            carNames.push(matched)
+          }
+          await nameWorker.terminate()
+        }
+
         await worker.terminate()
-        resolve({ points, debugLog, imageUrl, badgeRightEdges })
+        resolve({ points, carNames, debugLog, imageUrl, badgeRightEdges })
       } catch (e) {
         URL.revokeObjectURL(imageUrl)
         reject(e)
