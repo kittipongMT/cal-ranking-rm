@@ -78,7 +78,7 @@ export default function App() {
     if (importingSection) return
     setImportingSection(sectionId)
     try {
-      const points = await importScreenshot(sectionId, () => {})
+      const { points, debugLog } = await importScreenshot(sectionId, () => {})
       if (!points.length) return
 
       setState((prev) => {
@@ -88,13 +88,20 @@ export default function App() {
           ...prev,
           sections: { ...prev.sections, [sectionId]: arr },
         }
-        // trigger calc after state update
         setTimeout(() => calc(next), 400)
         return next
       })
 
       const ok = points.filter(Boolean).length
-      alert(`Import ${sectionId.toUpperCase()} เสร็จ ✅\nอ่านแต้มได้ ${ok}/${points.length}`)
+      const failedSlots = points
+        .map((p, i) => (!p ? `#${i + 1}: ${debugLog[i] ?? '-'}` : null))
+        .filter(Boolean)
+
+      let msg = `Import ${sectionId.toUpperCase()} เสร็จ ✅\nอ่านแต้มได้ ${ok}/${points.length}`
+      if (failedSlots.length) {
+        msg += `\n\n⚠️ อ่านไม่ได้ (ดู Console F12):\n${failedSlots.join('\n')}`
+      }
+      alert(msg)
     } catch (e) {
       console.error(e)
       alert('Import ไม่สำเร็จ ❌\nเช็ก Console ได้ (F12) ว่ามี error อะไร')
