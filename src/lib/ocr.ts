@@ -15,8 +15,12 @@ declare global {
 }
 
 function pick4Digits(text: string): string {
-  const m = String(text || '').match(/(\d{4})/)
-  return m ? m[1] : ''
+  // Strip all non-digit chars first (handles "2,100" / "2 100" / "2.100")
+  const digits = String(text || '').replace(/\D/g, '')
+  if (digits.length >= 4) return digits.slice(0, 4)
+  // Fallback: try to find any 3+ digit sequence
+  const m = String(text || '').match(/(\d{3,})/)
+  return m ? m[1].slice(0, 4) : ''
 }
 
 function fileToImage(file: File): Promise<HTMLImageElement> {
@@ -44,12 +48,18 @@ function cropToCanvas(
   const sh = Math.max(1, Math.round(img.naturalHeight * h))
 
   const canvas = document.createElement('canvas')
-  const scale = 3
+  const scale = 4  // higher res → better OCR accuracy
   canvas.width = sw * scale
   canvas.height = sh * scale
 
   const ctx = canvas.getContext('2d')!
   ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+
+  // White background first
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
 
   const im = ctx.getImageData(0, 0, canvas.width, canvas.height)
@@ -57,20 +67,21 @@ function cropToCanvas(
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i], g = d[i + 1], b = d[i + 2]
     const gray = r * 0.299 + g * 0.587 + b * 0.114
-    const v = gray > 140 ? 255 : 0
+    // bright pixels (white digits) → black text on white bg for tesseract
+    const v = gray > 160 ? 0 : 255
     d[i] = d[i + 1] = d[i + 2] = v
+    d[i + 3] = 255
   }
   ctx.putImageData(im, 0, 0)
 
   return canvas
 }
 
-async function ocrText(canvas: HTMLCanvasElement): Promise<string> {
-  // Use npm tesseract.js
-  const { createWorker } = await import('tesseract.js')
-  const worker = await createWorker('eng')
+async function ocrText(
+  canvas: HTMLCanvasElement,
+  worker: Awaited<ReturnType<typeof import('tesseract.js')['createWorker']>>
+): Promise<string> {
   const { data } = await worker.recognize(canvas)
-  await worker.terminate()
   return (data.text || '').trim()
 }
 
@@ -99,15 +110,24 @@ export async function importScreenshot(
 
       try {
         const img = await fileToImage(file)
-        const points: string[] = []
 
+        // Create ONE worker for all boxes (much faster)
+        const { createWorker } = await import('tesseract.js')
+        const worker = await createWorker('eng')
+        // Only recognize digits — avoids misreads like O→0, l→1 etc.
+        await worker.setParameters({
+          tessedit_char_whitelist: '0123456789',
+        })
+
+        const points: string[] = []
         for (let i = 0; i < boxes.length; i++) {
           const canvas = cropToCanvas(img, boxes[i].pointBox)
-          const raw = await ocrText(canvas)
+          const raw = await ocrText(canvas, worker)
           points.push(pick4Digits(raw) || '')
           onProgress(Math.round(((i + 1) / boxes.length) * 100))
         }
 
+        await worker.terminate()
         resolve(points)
       } catch (e) {
         reject(e)
