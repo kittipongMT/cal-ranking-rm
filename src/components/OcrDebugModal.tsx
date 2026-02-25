@@ -9,12 +9,14 @@ interface OcrDebugModalProps {
   imageUrl: string
   sectionId: SectionId
   points: string[]
+  /** badgeRightEdges[i] = absolute X pixel (in natural image coords) where purple badge ends */
+  badgeRightEdges?: (number | null)[]
   onClose: () => void
 }
 
-const BOX_COLORS = [
-  '#ff4444', '#ff8800', '#ffdd00', '#44ff44',
-  '#00ccff', '#8844ff', '#ff44cc', '#ffffff',
+const SLOT_COLORS = [
+  '#ff4444', '#ff8800', '#ffdd00', '#44ff88',
+  '#00ccff', '#aa44ff', '#ff66cc', '#ffffff',
 ]
 
 export default function OcrDebugModal({
@@ -22,6 +24,7 @@ export default function OcrDebugModal({
   imageUrl,
   sectionId,
   points,
+  badgeRightEdges = [],
   onClose,
 }: OcrDebugModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -35,7 +38,6 @@ export default function OcrDebugModal({
     img.src = imageUrl
 
     img.onload = () => {
-      // Fit image to max 900px wide
       const maxW = Math.min(900, img.naturalWidth)
       const scale = maxW / img.naturalWidth
       canvas.width = maxW
@@ -43,36 +45,79 @@ export default function OcrDebugModal({
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
+      const margin = Math.round(img.naturalWidth * 0.005) // same as ocr.ts
+
       const boxes: OcrBox[] = OCR_BOXES[sectionId]
       boxes.forEach((box, i) => {
         const [bx, by, bw, bh] = box.pointBox
-        const rx = bx * canvas.width
-        const ry = by * canvas.height
-        const rw = bw * canvas.width
-        const rh = bh * canvas.height
+        const color = SLOT_COLORS[i % SLOT_COLORS.length]
 
-        const color = BOX_COLORS[i % BOX_COLORS.length]
+        // ── Search zone (full wide box) ── dashed yellow
+        const zx = bx * canvas.width
+        const zy = by * canvas.height
+        const zw = bw * canvas.width
+        const zh = bh * canvas.height
 
-        // Semi-transparent fill
-        ctx.fillStyle = color + '33'
-        ctx.fillRect(rx, ry, rw, rh)
+        ctx.save()
+        ctx.setLineDash([5, 4])
+        ctx.strokeStyle = '#ffee00'
+        ctx.lineWidth = 1.5
+        ctx.strokeRect(zx, zy, zw, zh)
+        ctx.restore()
 
-        // Border
+        // ── Number crop zone (after badge) ── solid colored border
+        const badgeRX = badgeRightEdges[i]       // absolute X pixel in natural img
+        const searchSx = Math.round(img.naturalWidth * bx)
+        const searchSy = Math.round(img.naturalHeight * by)
+        const searchSw = Math.round(img.naturalWidth * bw)
+        const searchSh = Math.round(img.naturalHeight * bh)
+
+        const numStartX = badgeRX !== null && badgeRX !== undefined
+          ? badgeRX + margin
+          : searchSx + Math.round(searchSw * 0.65) // fallback: right 35%
+        const numEndX = searchSx + searchSw
+        const nw = Math.max(0, numEndX - numStartX)
+
+        // Convert back to canvas-display coords
+        const nx = numStartX * scale
+        const ny = searchSy * scale
+        const nwDisplay = nw * scale
+        const nhDisplay = searchSh * scale
+
+        // Filled tint
+        ctx.fillStyle = color + '28'
+        ctx.fillRect(nx, ny, nwDisplay, nhDisplay)
+
+        // Solid border
         ctx.strokeStyle = color
         ctx.lineWidth = 2
-        ctx.strokeRect(rx, ry, rw, rh)
+        ctx.strokeRect(nx, ny, nwDisplay, nhDisplay)
 
-        // Label: box number + read value
+        // Badge-end marker (vertical line)
+        if (badgeRX !== null && badgeRX !== undefined) {
+          const bLineX = (badgeRX + margin) * scale
+          ctx.save()
+          ctx.strokeStyle = '#ff69b4'
+          ctx.lineWidth = 1.5
+          ctx.setLineDash([3, 3])
+          ctx.beginPath()
+          ctx.moveTo(bLineX, ny)
+          ctx.lineTo(bLineX, ny + nhDisplay)
+          ctx.stroke()
+          ctx.restore()
+        }
+
+        // Label: "#N: value" above the number zone
         const label = `#${i + 1}: ${points[i] || '❌'}`
         ctx.font = 'bold 13px monospace'
         const tw = ctx.measureText(label).width
-        ctx.fillStyle = 'rgba(0,0,0,0.75)'
-        ctx.fillRect(rx, ry - 20, tw + 8, 20)
+        ctx.fillStyle = 'rgba(0,0,0,0.8)'
+        ctx.fillRect(nx, ny - 21, tw + 8, 20)
         ctx.fillStyle = color
-        ctx.fillText(label, rx + 4, ry - 5)
+        ctx.fillText(label, nx + 4, ny - 6)
       })
     }
-  }, [open, imageUrl, sectionId, points])
+  }, [open, imageUrl, sectionId, points, badgeRightEdges])
 
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
@@ -83,18 +128,26 @@ export default function OcrDebugModal({
             w-[95vw] max-w-5xl max-h-[90vh] flex flex-col
             rounded-2xl border border-[rgba(223,205,128,0.3)] bg-zinc-900 shadow-2xl overflow-hidden"
         >
-          <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 flex-shrink-0">
-            <Dialog.Title className="text-[#dfcd80] font-bold text-lg">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 flex-shrink-0 gap-4">
+            <Dialog.Title className="text-[#dfcd80] font-bold text-lg whitespace-nowrap">
               OCR Debug — {sectionId.toUpperCase()}
             </Dialog.Title>
-            <Dialog.Description className="text-zinc-500 text-xs">
-              กรอบสีแสดงตำแหน่งที่อ่านแต้ม • ตัวเลขในกรอบ = ผลที่อ่านได้
+            <Dialog.Description className="text-zinc-500 text-xs text-center flex-1">
+              <span className="inline-block mr-3">
+                <span className="text-yellow-300">- - -</span> = zone ค้นหา badge ม่วง
+              </span>
+              <span className="inline-block mr-3">
+                <span className="text-pink-400">| |</span> = ขอบขวา badge
+              </span>
+              <span className="inline-block">
+                <span className="text-green-400">───</span> = zone OCR ตัวเลข
+              </span>
             </Dialog.Description>
             <Dialog.Close asChild>
               <button
                 onClick={onClose}
                 className="text-zinc-400 hover:text-white w-8 h-8 flex items-center justify-center
-                  rounded-full hover:bg-zinc-700 text-xl transition-colors"
+                  rounded-full hover:bg-zinc-700 text-xl transition-colors flex-shrink-0"
               >
                 ×
               </button>
@@ -118,12 +171,16 @@ export default function OcrDebugModal({
               >
                 <span
                   className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
-                  style={{ background: BOX_COLORS[i % BOX_COLORS.length] }}
+                  style={{ background: SLOT_COLORS[i % SLOT_COLORS.length] }}
                 />
                 <span className="text-zinc-400">#{i + 1}</span>
                 <span className={p ? 'text-white font-bold' : 'text-red-400'}>
                   {p || 'ไม่ได้'}
                 </span>
+                {badgeRightEdges[i] != null
+                  ? <span className="text-pink-400 text-[10px]">badge✓</span>
+                  : <span className="text-zinc-600 text-[10px]">fallback</span>
+                }
               </span>
             ))}
           </div>
@@ -132,3 +189,4 @@ export default function OcrDebugModal({
     </Dialog.Root>
   )
 }
+

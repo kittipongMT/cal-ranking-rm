@@ -4,24 +4,64 @@ import type { SectionId } from '../config'
 
 /** Extract the best 4-digit score (1000–9999) from OCR text */
 function extractScore(text: string): string {
-  // Find all contiguous digit sequences
   const allNums = [...String(text || '').matchAll(/\d+/g)].map((m) => m[0])
-
-  // Prefer exact 4-digit numbers in plausible game score range
   const fourDigit = allNums.find((n) => n.length === 4 && Number(n) >= 1000)
   if (fourDigit) return fourDigit
-
-  // Fallback: strip all non-digits and look for 4+ digit run
   const digits = String(text || '').replace(/\D/g, '')
   if (digits.length >= 4) {
-    // Try every 4-char window and pick one in 1000–9999
     for (let i = 0; i <= digits.length - 4; i++) {
       const chunk = digits.slice(i, i + 4)
       if (Number(chunk) >= 1000) return chunk
     }
   }
-
   return ''
+}
+
+/** Detect if pixel (r,g,b) is a vivid purple (the game's scoring badge color) */
+function isVividPurple(r: number, g: number, b: number): boolean {
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const delta = max - min
+  if (delta < 40) return false
+  let h = 0
+  if (max === r) h = ((g - b) / delta + (g < b ? 6 : 0)) * 60
+  else if (max === g) h = ((b - r) / delta + 2) * 60
+  else h = ((r - g) / delta + 4) * 60
+  const l = (max + min) / 2 / 255
+  const s = delta / 255 / (1 - Math.abs(2 * l - 1))
+  // Purple/violet: hue 240–310, saturated, mid lightness
+  return h >= 240 && h <= 315 && s > 0.35 && l > 0.15 && l < 0.75
+}
+
+/**
+ * Scan a region of the image for purple badge pixels.
+ * Returns the rightmost X pixel (in natural image coords) of the purple region,
+ * or null if no purple badge found.
+ */
+function findBadgeRightEdge(
+  img: HTMLImageElement,
+  sx: number, sy: number, sw: number, sh: number
+): number | null {
+  const tmpCanvas = document.createElement('canvas')
+  tmpCanvas.width = sw
+  tmpCanvas.height = sh
+  const ctx = tmpCanvas.getContext('2d')!
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh)
+  const { data } = ctx.getImageData(0, 0, sw, sh)
+
+  let rightmostPurpleCol = -1
+
+  for (let col = 0; col < sw; col++) {
+    let purpleCount = 0
+    for (let row = 0; row < sh; row++) {
+      const idx = (row * sw + col) * 4
+      if (isVividPurple(data[idx], data[idx + 1], data[idx + 2])) purpleCount++
+    }
+    // Column is "purple" if >20% of its pixels are purple
+    if (purpleCount > sh * 0.20) rightmostPurpleCol = col
+  }
+
+  return rightmostPurpleCol >= 0 ? sx + rightmostPurpleCol : null
 }
 
 function fileToImage(file: File): Promise<HTMLImageElement> {
@@ -34,31 +74,35 @@ function fileToImage(file: File): Promise<HTMLImageElement> {
   })
 }
 
-/** Crop image region and apply threshold preprocessing for Tesseract */
-function cropToCanvas(
+/**
+ * Crop the number area (right side of purple badge) and preprocess for Tesseract.
+ * If badge not found, falls back to right 35% of the search zone.
+ */
+function buildNumberCanvas(
   img: HTMLImageElement,
-  box: [number, number, number, number],
+  searchSx: number, searchSy: number, searchSw: number, searchSh: number,
+  badgeRightX: number | null,
   threshold: number,
-  invertBright: boolean   // true = bright→black (white text on dark bg)
+  invertBright: boolean
 ): HTMLCanvasElement {
-  const [x, y, w, h] = box
-
-  const sx = Math.round(img.naturalWidth * x)
-  const sy = Math.round(img.naturalHeight * y)
-  const sw = Math.max(1, Math.round(img.naturalWidth * w))
-  const sh = Math.max(1, Math.round(img.naturalHeight * h))
+  const margin = Math.round(img.naturalWidth * 0.005)
+  const numStartX = badgeRightX !== null
+    ? badgeRightX + margin
+    : searchSx + Math.round(searchSw * 0.65)  // fallback: right 35%
+  const numEndX = searchSx + searchSw
+  const nw = Math.max(8, numEndX - numStartX)
 
   const canvas = document.createElement('canvas')
   const scale = 4
-  canvas.width = sw * scale
-  canvas.height = sh * scale
+  canvas.width = nw * scale
+  canvas.height = searchSh * scale
 
   const ctx = canvas.getContext('2d')!
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
   ctx.fillStyle = '#fff'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+  ctx.drawImage(img, numStartX, searchSy, nw, searchSh, 0, 0, canvas.width, canvas.height)
 
   const im = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const d = im.data
@@ -81,10 +125,18 @@ async function ocrCanvas(
   return (data.text || '').trim()
 }
 
+export interface OcrResult {
+  points: string[]
+  debugLog: string[]
+  imageUrl: string
+  /** badgeRightEdges[i] = absolute x pixel where badge ends for box i (null if not found) */
+  badgeRightEdges: (number | null)[]
+}
+
 export async function importScreenshot(
   sectionId: SectionId,
   onProgress: (progress: number) => void
-): Promise<{ points: string[]; debugLog: string[]; imageUrl: string }> {
+): Promise<OcrResult> {
   const boxes = OCR_BOXES[sectionId]
   if (!boxes?.length) throw new Error('ยังไม่มี OCR_BOXES ของหมวดนี้')
 
@@ -98,7 +150,7 @@ export async function importScreenshot(
     fileInput.onchange = async () => {
       const file = fileInput.files?.[0]
       document.body.removeChild(fileInput)
-      if (!file) { resolve({ points: [], debugLog: [], imageUrl: '' }); return }
+      if (!file) { resolve({ points: [], debugLog: [], imageUrl: '', badgeRightEdges: [] }); return }
 
       const imageUrl = URL.createObjectURL(file)
       try {
@@ -109,27 +161,39 @@ export async function importScreenshot(
 
         const points: string[] = []
         const debugLog: string[] = []
+        const badgeRightEdges: (number | null)[] = []
 
         for (let i = 0; i < boxes.length; i++) {
-          // Try two preprocessing strategies; pick whichever yields a valid score
+          const [bx, by, bw, bh] = boxes[i].pointBox
+          const sx = Math.round(img.naturalWidth * bx)
+          const sy = Math.round(img.naturalHeight * by)
+          const sw = Math.max(1, Math.round(img.naturalWidth * bw))
+          const sh = Math.max(1, Math.round(img.naturalHeight * bh))
+
+          const badgeRightX = findBadgeRightEdge(img, sx, sy, sw, sh)
+          badgeRightEdges.push(badgeRightX)
+
           const strategies: Array<[number, boolean]> = [
-            [155, true],   // white text on dark bg (primary: game UI style)
-            [120, true],   // lower threshold fallback
-            [140, false],  // dark text on light bg (alternative)
+            [155, true],
+            [120, true],
+            [140, false],
           ]
 
           let best = ''
           const rawReadings: string[] = []
 
           for (const [thresh, inv] of strategies) {
-            const canvas = cropToCanvas(img, boxes[i].pointBox, thresh, inv)
+            const canvas = buildNumberCanvas(img, sx, sy, sw, sh, badgeRightX, thresh, inv)
             const raw = await ocrCanvas(canvas, worker)
             rawReadings.push(`t${thresh}${inv ? 'i' : 'n'}:"${raw}"`)
             const score = extractScore(raw)
             if (score && !best) best = score
           }
 
-          const log = `box${i + 1}: ${rawReadings.join(' | ')} → "${best}"`
+          const badgeStr = badgeRightX !== null
+            ? `badge→x${badgeRightX}`
+            : 'no-badge(fallback)'
+          const log = `box${i + 1}[${badgeStr}]: ${rawReadings.join(' | ')} → "${best}"`
           debugLog.push(log)
           console.log(`[OCR ${sectionId}] ${log}`)
 
@@ -138,7 +202,7 @@ export async function importScreenshot(
         }
 
         await worker.terminate()
-        resolve({ points, debugLog, imageUrl })
+        resolve({ points, debugLog, imageUrl, badgeRightEdges })
       } catch (e) {
         URL.revokeObjectURL(imageUrl)
         reject(e)
@@ -148,3 +212,4 @@ export async function importScreenshot(
     fileInput.click()
   })
 }
+

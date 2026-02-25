@@ -29,6 +29,7 @@ export default function App() {
     imageUrl: string
     sectionId: SectionId
     points: string[]
+    badgeRightEdges: (number | null)[]
   } | null>(null)
 
   const userRef = useRef<User | null>(null)
@@ -84,7 +85,7 @@ export default function App() {
     if (importingSection) return
     setImportingSection(sectionId)
     try {
-      const { points, debugLog, imageUrl } = await importScreenshot(sectionId, () => {})
+      const { points, debugLog, imageUrl, badgeRightEdges } = await importScreenshot(sectionId, () => {})
       if (!points.length) return
 
       setState((prev) => {
@@ -99,7 +100,7 @@ export default function App() {
       })
 
       // Show debug modal always so user can verify boxes
-      setDebugModal({ imageUrl, sectionId, points })
+      setDebugModal({ imageUrl, sectionId, points, badgeRightEdges })
 
       const ok = points.filter(Boolean).length
       const failedSlots = points
@@ -197,6 +198,7 @@ export default function App() {
           imageUrl={debugModal.imageUrl}
           sectionId={debugModal.sectionId}
           points={debugModal.points}
+          badgeRightEdges={debugModal.badgeRightEdges}
           onClose={() => {
             URL.revokeObjectURL(debugModal.imageUrl)
             setDebugModal(null)

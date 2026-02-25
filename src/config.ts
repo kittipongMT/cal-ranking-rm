@@ -44,35 +44,42 @@ export interface OcrBox {
   pointBox: [number, number, number, number]
 }
 
+// OCR_BOXES: each pointBox is [x, y, w, h] in 0–1 image fractions.
+// The x and w are WIDE enough to include the purple badge on the LEFT of the number.
+// findBadgeRightEdge() in ocr.ts will auto-detect where the badge ends
+// and crop only the number portion to the right.
 export const OCR_BOXES: Record<SectionId, OcrBox[]> = {
   extream: [
-    { pointBox: [0.522, 0.270, 0.045, 0.100] },
-    { pointBox: [0.695, 0.270, 0.040, 0.100] },
-    { pointBox: [0.848, 0.270, 0.060, 0.100] },  // box3: fine-tuned to clear badge
-
-    { pointBox: [0.522, 0.500, 0.045, 0.100] },
-    { pointBox: [0.695, 0.500, 0.040, 0.100] },
-    { pointBox: [0.860, 0.500, 0.040, 0.100] },
-
-    { pointBox: [0.518, 0.730, 0.065, 0.120] },  // was 0.545/0.050 → shift left + wider
-    { pointBox: [0.705, 0.730, 0.050, 0.120] },
+    // Row 1 — right edges preserved: 0.567, 0.735, 0.908
+    { pointBox: [0.420, 0.270, 0.147, 0.100] },
+    { pointBox: [0.595, 0.270, 0.140, 0.100] },
+    { pointBox: [0.745, 0.270, 0.163, 0.100] },
+    // Row 2 — right edges: 0.567, 0.735, 0.900
+    { pointBox: [0.420, 0.500, 0.147, 0.100] },
+    { pointBox: [0.595, 0.500, 0.140, 0.100] },
+    { pointBox: [0.755, 0.500, 0.145, 0.100] },
+    // Row 3 — right edges: 0.583, 0.755
+    { pointBox: [0.415, 0.730, 0.168, 0.120] },
+    { pointBox: [0.600, 0.730, 0.155, 0.120] },
   ],
   sport: [
-    { pointBox: [0.536, 0.312, 0.055, 0.070] },
-    { pointBox: [0.719, 0.319, 0.040, 0.055] },
-    { pointBox: [0.894, 0.320, 0.040, 0.053] },
-    { pointBox: [0.544, 0.547, 0.039, 0.058] },
-    { pointBox: [0.719, 0.548, 0.039, 0.055] },
-    { pointBox: [0.868, 0.547, 0.040, 0.054] },
-    { pointBox: [0.517, 0.775, 0.040, 0.054] },
+    // Right edges preserved: 0.591, 0.759, 0.934, 0.583, 0.758, 0.908, 0.557
+    { pointBox: [0.436, 0.312, 0.155, 0.070] },
+    { pointBox: [0.619, 0.319, 0.140, 0.055] },
+    { pointBox: [0.794, 0.320, 0.140, 0.053] },
+    { pointBox: [0.444, 0.547, 0.139, 0.058] },
+    { pointBox: [0.619, 0.548, 0.139, 0.055] },
+    { pointBox: [0.768, 0.547, 0.140, 0.054] },
+    { pointBox: [0.417, 0.775, 0.140, 0.054] },
   ],
   standard: [
-    { pointBox: [0.518, 0.388, 0.038, 0.039] },
-    { pointBox: [0.694, 0.390, 0.037, 0.037] },
-    { pointBox: [0.868, 0.386, 0.038, 0.045] },
-    { pointBox: [0.544, 0.616, 0.039, 0.041] },
-    { pointBox: [0.720, 0.617, 0.036, 0.039] },
-    { pointBox: [0.896, 0.617, 0.035, 0.038] },
-    { pointBox: [0.545, 0.844, 0.036, 0.039] },
+    // Right edges preserved: 0.556, 0.731, 0.906, 0.583, 0.756, 0.931, 0.581
+    { pointBox: [0.418, 0.388, 0.138, 0.039] },
+    { pointBox: [0.594, 0.390, 0.137, 0.037] },
+    { pointBox: [0.768, 0.386, 0.138, 0.045] },
+    { pointBox: [0.444, 0.616, 0.139, 0.041] },
+    { pointBox: [0.620, 0.617, 0.136, 0.039] },
+    { pointBox: [0.796, 0.617, 0.135, 0.038] },
+    { pointBox: [0.445, 0.844, 0.136, 0.039] },
   ],
 }
