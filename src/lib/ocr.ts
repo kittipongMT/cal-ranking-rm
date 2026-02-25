@@ -177,7 +177,8 @@ export async function importScreenshot(
           const sw = Math.max(1, Math.round(img.naturalWidth * bw))
           const sh = Math.max(1, Math.round(img.naturalHeight * bh))
 
-          const badgeRightX = findBadgeRightEdge(img, sx, sy, sw, sh)
+          const badgeEdge = findBadgeRightEdge(img, sx, sy, sw, sh)
+          const badgeRightX = badgeEdge !== null ? badgeEdge - 15 : null
           badgeRightEdges.push(badgeRightX)
 
           const strategies: Array<[number, boolean]> = [

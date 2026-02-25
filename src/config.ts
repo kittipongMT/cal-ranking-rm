@@ -51,16 +51,16 @@ export interface OcrBox {
 export const OCR_BOXES: Record<SectionId, OcrBox[]> = {
   extream: [
     // Row 1 — right edges preserved: 0.567, 0.735, 0.908
-    { pointBox: [0.420, 0.270, 0.147, 0.100] },
-    { pointBox: [0.595, 0.270, 0.140, 0.100] },
-    { pointBox: [0.745, 0.270, 0.163, 0.100] },
+    { pointBox: [0.420, 0.270, 0.170, 0.050] },
+    { pointBox: [0.595, 0.270, 0.170, 0.050] },
+    { pointBox: [0.770, 0.270, 0.170, 0.050] },
     // Row 2 — right edges: 0.567, 0.735, 0.900
-    { pointBox: [0.420, 0.500, 0.147, 0.100] },
-    { pointBox: [0.595, 0.500, 0.140, 0.100] },
-    { pointBox: [0.755, 0.500, 0.145, 0.100] },
+    { pointBox: [0.420, 0.490, 0.170, 0.050] },
+    { pointBox: [0.595, 0.490, 0.170, 0.050] },
+    { pointBox: [0.770, 0.490, 0.170, 0.050] },
     // Row 3 — right edges: 0.583, 0.755
-    { pointBox: [0.415, 0.730, 0.168, 0.120] },
-    { pointBox: [0.600, 0.730, 0.155, 0.120] },
+    { pointBox: [0.420, 0.720, 0.170, 0.050] },
+    { pointBox: [0.595, 0.720, 0.170, 0.050] },
   ],
   sport: [
     // Right edges preserved: 0.591, 0.759, 0.934, 0.583, 0.758, 0.908, 0.557
