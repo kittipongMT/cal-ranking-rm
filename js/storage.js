@@ -71,5 +71,10 @@
   A.saveState = function () {
     A.STATE = A.collectStateFromUI();
     localStorage.setItem(A.STORAGE_KEY, JSON.stringify(A.STATE));
+
+    if (A.cloud?.saveStateDebounced) {
+      A.cloud.saveStateDebounced(A.STATE);
+    }
   };
+
 })();

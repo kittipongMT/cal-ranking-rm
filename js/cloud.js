@@ -1,6 +1,6 @@
-// ===== Firebase Setup =====
+// js/cloud.js (MODULE)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { 
+import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
@@ -8,22 +8,83 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// 🔴 เอา config จาก Firebase console มาใส่ตรงนี้
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ✅ 1) ใส่ config ของคุณตรงนี้ (อันเดิมที่คุณใช้ login ได้)
 const firebaseConfig = {
-  apiKey: "AIzaSyBsfan9ZXraevVDpTe8q1GL7DkfUER0wc0",
-  authDomain: "cal-ranking-rm.firebaseapp.com",
-  projectId: "cal-ranking-rm",
-  storageBucket: "cal-ranking-rm.firebasestorage.app",
-  messagingSenderId: "937306488262",
-  appId: "1:937306488262:web:4428898ff1903d6ffd46c7",
-  measurementId: "G-13CK76G4Q7"
+  apiKey: "PUT_YOUR_API_KEY_HERE",
+  authDomain: "PUT_YOUR_AUTH_DOMAIN_HERE",
+  projectId: "PUT_YOUR_PROJECT_ID_HERE",
+  storageBucket: "PUT_YOUR_BUCKET_HERE",
+  messagingSenderId: "PUT_YOUR_SENDER_ID_HERE",
+  appId: "PUT_YOUR_APP_ID_HERE"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// ===== สร้างปุ่ม Login UI =====
+// ✅ 2) สร้าง namespace ให้ไฟล์อื่นใช้
+window.RMAPP = window.RMAPP || {};
+window.RMAPP.cloud = window.RMAPP.cloud || {};
+
+const Cloud = window.RMAPP.cloud;
+Cloud.user = null;
+
+function stateDocRef(uid) {
+  // path: users/{uid}/apps/rm_rank_calc
+  return doc(db, "users", uid, "apps", "rm_rank_calc");
+}
+
+Cloud.signInGoogle = async () => {
+  await signInWithPopup(auth, provider);
+};
+
+Cloud.signOut = async () => {
+  await signOut(auth);
+};
+
+Cloud.loadState = async () => {
+  if (!Cloud.user) return null;
+  const ref = stateDocRef(Cloud.user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return data?.state || null;
+};
+
+// กันเขียนถี่เกินไป
+let saveTimer = null;
+
+Cloud.saveStateDebounced = (state) => {
+  if (!Cloud.user) return;
+  if (saveTimer) clearTimeout(saveTimer);
+
+  saveTimer = setTimeout(async () => {
+    try {
+      const ref = stateDocRef(Cloud.user.uid);
+      await setDoc(ref, { state, updatedAt: serverTimestamp() }, { merge: true });
+    } catch (e) {
+      console.warn("Cloud save failed:", e);
+    }
+  }, 700);
+};
+
+Cloud.onAuthChanged = (cb) => {
+  onAuthStateChanged(auth, (user) => {
+    Cloud.user = user || null;
+    cb && cb(user || null);
+  });
+};
+
+// ✅ 3) ปุ่มลอย (เหมือนเดิม) — กดครั้งเดียว login / logout
 const loginBtn = document.createElement("button");
 loginBtn.textContent = "Sign in with Google";
 loginBtn.style.position = "fixed";
@@ -37,22 +98,19 @@ loginBtn.style.cursor = "pointer";
 loginBtn.style.zIndex = "9999";
 loginBtn.style.background = "#dfcd80";
 loginBtn.style.color = "#000";
-
 document.body.appendChild(loginBtn);
 
 loginBtn.addEventListener("click", async () => {
-  if (auth.currentUser) {
-    await signOut(auth);
-  } else {
-    await signInWithPopup(auth, provider);
+  try {
+    if (auth.currentUser) await Cloud.signOut();
+    else await Cloud.signInGoogle();
+  } catch (e) {
+    console.error(e);
+    alert("Login/Logout ไม่สำเร็จ ❌\nดู Console (F12) ได้ครับ");
   }
 });
 
-// ===== ตรวจสอบสถานะ Login =====
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    loginBtn.textContent = "Logout (" + user.displayName + ")";
-  } else {
-    loginBtn.textContent = "Sign in with Google";
-  }
+Cloud.onAuthChanged((user) => {
+  if (user) loginBtn.textContent = `Logout (${user.displayName || "Google"})`;
+  else loginBtn.textContent = "Sign in with Google";
 });
