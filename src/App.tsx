@@ -4,6 +4,7 @@ import SectionCard from './components/SectionCard'
 import SummaryCard from './components/SummaryCard'
 import AuthButton from './components/AuthButton'
 import OcrDebugModal from './components/OcrDebugModal'
+import ScorePage from './components/ScorePage'
 import { sections } from './config'
 import logoUrl from './images/image.png'
 import rmBgUrl from './images/rm-bg.jpg'
@@ -28,6 +29,7 @@ export default function App() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [importingSection, setImportingSection] = useState<SectionId | null>(null)
   const [user, setUser] = useState<User | null>(null)
+  const [page, setPage] = useState<'ranking' | 'score'>('ranking')
   const [debugModal, setDebugModal] = useState<{
     imageUrl: string
     sectionId: SectionId
@@ -201,7 +203,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen text-[#eaeaea] font-kanit relative"
+      className="min-h-[125vh] text-[#eaeaea] font-kanit relative flex flex-col"
       style={{
         backgroundImage: `url(${rmBgUrl})`,
         backgroundSize: 'cover',
@@ -221,6 +223,33 @@ export default function App() {
             <span className="text-white font-extrabold text-sm tracking-widest uppercase">Racing Master</span>
             <span className="text-zinc-500 text-[10px] tracking-wider">Ranking Calculator</span>
           </div>
+          {/* Page nav tabs */}
+          <nav className="flex items-center gap-1 ml-4">
+            <button
+              type="button"
+              onClick={() => setPage('ranking')}
+              className={`h-7 px-3 text-xs font-bold uppercase tracking-wider rounded transition-all
+                ${
+                  page === 'ranking'
+                    ? 'bg-[#e60a3d] text-white'
+                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
+                }`}
+            >
+              Ranking
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage('score')}
+              className={`h-7 px-3 text-xs font-bold uppercase tracking-wider rounded transition-all
+                ${
+                  page === 'score'
+                    ? 'bg-[#e60a3d] text-white'
+                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
+                }`}
+            >
+              Score
+            </button>
+          </nav>
           <div className="ml-auto">
             <AuthButton
               user={user}
@@ -231,6 +260,11 @@ export default function App() {
         </div>
       </header>
 
+      {page === 'score' ? (
+        <div className="flex-1">
+          <ScorePage />
+        </div>
+      ) : (
       <main className="max-w-[1320px] mx-auto px-3 py-4 flex flex-col gap-3">
         {/* 3 section cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -262,6 +296,7 @@ export default function App() {
           isCalculating={isCalculating}
         />
       </main>
+      )}
 
       {/* OCR Debug Modal */}
       {debugModal && (
