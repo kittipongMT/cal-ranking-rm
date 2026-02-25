@@ -48,11 +48,13 @@ export const OCR_BOXES: Record<SectionId, OcrBox[]> = {
   extream: [
     { pointBox: [0.522, 0.270, 0.045, 0.100] },
     { pointBox: [0.695, 0.270, 0.040, 0.100] },
-    { pointBox: [0.860, 0.270, 0.040, 0.100] },
+    { pointBox: [0.835, 0.270, 0.060, 0.100] },  // was 0.860/0.040 → shift left + wider (badge overlap)
+
     { pointBox: [0.522, 0.500, 0.045, 0.100] },
     { pointBox: [0.695, 0.500, 0.040, 0.100] },
     { pointBox: [0.860, 0.500, 0.040, 0.100] },
-    { pointBox: [0.545, 0.730, 0.050, 0.120] },
+
+    { pointBox: [0.518, 0.730, 0.065, 0.120] },  // was 0.545/0.050 → shift left + wider
     { pointBox: [0.705, 0.730, 0.050, 0.120] },
   ],
   sport: [
