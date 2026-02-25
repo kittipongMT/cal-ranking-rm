@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import SectionCard from './components/SectionCard'
 import SummaryCard from './components/SummaryCard'
 import AuthButton from './components/AuthButton'
+import OcrDebugModal from './components/OcrDebugModal'
 import { sections } from './config'
 import type { SectionId } from './config'
 import type { AppState, CalcResult } from './types'
@@ -24,6 +25,11 @@ export default function App() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [importingSection, setImportingSection] = useState<SectionId | null>(null)
   const [user, setUser] = useState<User | null>(null)
+  const [debugModal, setDebugModal] = useState<{
+    imageUrl: string
+    sectionId: SectionId
+    points: string[]
+  } | null>(null)
 
   const userRef = useRef<User | null>(null)
   userRef.current = user
@@ -78,7 +84,7 @@ export default function App() {
     if (importingSection) return
     setImportingSection(sectionId)
     try {
-      const { points, debugLog } = await importScreenshot(sectionId, () => {})
+      const { points, debugLog, imageUrl } = await importScreenshot(sectionId, () => {})
       if (!points.length) return
 
       setState((prev) => {
@@ -92,16 +98,18 @@ export default function App() {
         return next
       })
 
+      // Show debug modal always so user can verify boxes
+      setDebugModal({ imageUrl, sectionId, points })
+
       const ok = points.filter(Boolean).length
       const failedSlots = points
         .map((p, i) => (!p ? `#${i + 1}: ${debugLog[i] ?? '-'}` : null))
         .filter(Boolean)
 
-      let msg = `Import ${sectionId.toUpperCase()} เสร็จ ✅\nอ่านแต้มได้ ${ok}/${points.length}`
       if (failedSlots.length) {
-        msg += `\n\n⚠️ อ่านไม่ได้ (ดู Console F12):\n${failedSlots.join('\n')}`
+        console.warn(`[OCR] Failed slots:\n${failedSlots.join('\n')}`)
       }
-      alert(msg)
+      console.log(`[OCR] ${sectionId} done: ${ok}/${points.length}`)
     } catch (e) {
       console.error(e)
       alert('Import ไม่สำเร็จ ❌\nเช็ก Console ได้ (F12) ว่ามี error อะไร')
@@ -181,6 +189,20 @@ export default function App() {
           />
         </div>
       </div>
+
+      {/* OCR Debug Modal */}
+      {debugModal && (
+        <OcrDebugModal
+          open={!!debugModal}
+          imageUrl={debugModal.imageUrl}
+          sectionId={debugModal.sectionId}
+          points={debugModal.points}
+          onClose={() => {
+            URL.revokeObjectURL(debugModal.imageUrl)
+            setDebugModal(null)
+          }}
+        />
+      )}
     </div>
   )
 }

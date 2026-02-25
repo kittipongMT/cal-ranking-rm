@@ -84,7 +84,7 @@ async function ocrCanvas(
 export async function importScreenshot(
   sectionId: SectionId,
   onProgress: (progress: number) => void
-): Promise<{ points: string[]; debugLog: string[] }> {
+): Promise<{ points: string[]; debugLog: string[]; imageUrl: string }> {
   const boxes = OCR_BOXES[sectionId]
   if (!boxes?.length) throw new Error('ยังไม่มี OCR_BOXES ของหมวดนี้')
 
@@ -98,8 +98,9 @@ export async function importScreenshot(
     fileInput.onchange = async () => {
       const file = fileInput.files?.[0]
       document.body.removeChild(fileInput)
-      if (!file) { resolve({ points: [], debugLog: [] }); return }
+      if (!file) { resolve({ points: [], debugLog: [], imageUrl: '' }); return }
 
+      const imageUrl = URL.createObjectURL(file)
       try {
         const img = await fileToImage(file)
         const { createWorker } = await import('tesseract.js')
@@ -137,8 +138,9 @@ export async function importScreenshot(
         }
 
         await worker.terminate()
-        resolve({ points, debugLog })
+        resolve({ points, debugLog, imageUrl })
       } catch (e) {
+        URL.revokeObjectURL(imageUrl)
         reject(e)
       }
     }
