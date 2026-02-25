@@ -22,15 +22,22 @@ function isVividPurple(r: number, g: number, b: number): boolean {
   const max = Math.max(r, g, b)
   const min = Math.min(r, g, b)
   const delta = max - min
-  if (delta < 40) return false
-  let h = 0
-  if (max === r) h = ((g - b) / delta + (g < b ? 6 : 0)) * 60
-  else if (max === g) h = ((b - r) / delta + 2) * 60
-  else h = ((r - g) / delta + 4) * 60
+  if (delta < 25) return false          // too grey/dark
+  // Blue must be dominant channel, red can be mid, green must be low-ish
+  // Purple: R > G, B > G, and both R and B are significant
+  if (g > r || g > b) return false      // green dominant = not purple
+  if (b < 60) return false              // too dark in blue
+  const hue = (() => {
+    let h = 0
+    if (max === r) h = ((g - b) / delta + (g < b ? 6 : 0)) * 60
+    else if (max === g) h = ((b - r) / delta + 2) * 60
+    else h = ((r - g) / delta + 4) * 60
+    return h
+  })()
   const l = (max + min) / 2 / 255
   const s = delta / 255 / (1 - Math.abs(2 * l - 1))
-  // Purple/violet: hue 240–310, saturated, mid lightness
-  return h >= 240 && h <= 315 && s > 0.35 && l > 0.15 && l < 0.75
+  // Purple/violet: hue 220–340, moderate saturation, not too dark or washed out
+  return hue >= 220 && hue <= 340 && s > 0.20 && l > 0.10 && l < 0.85
 }
 
 /**
@@ -57,8 +64,8 @@ function findBadgeRightEdge(
       const idx = (row * sw + col) * 4
       if (isVividPurple(data[idx], data[idx + 1], data[idx + 2])) purpleCount++
     }
-    // Column is "purple" if >20% of its pixels are purple
-    if (purpleCount > sh * 0.20) rightmostPurpleCol = col
+    // Column is "purple" if >8% of its pixels are purple
+    if (purpleCount > sh * 0.08) rightmostPurpleCol = col
   }
 
   return rightmostPurpleCol >= 0 ? sx + rightmostPurpleCol : null
