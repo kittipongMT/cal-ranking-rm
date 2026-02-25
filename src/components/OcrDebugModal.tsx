@@ -35,8 +35,8 @@ export default function OcrDebugModal({
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')!
     const img = new Image()
-    img.src = imageUrl
 
+    img.onerror = (e) => console.error('[OcrDebug] image load failed', e)
     img.onload = () => {
       const maxW = Math.min(900, img.naturalWidth)
       const scale = maxW / img.naturalWidth
@@ -117,6 +117,8 @@ export default function OcrDebugModal({
         ctx.fillText(label, nx + 4, ny - 6)
       })
     }
+
+    img.src = imageUrl   // set AFTER onload to avoid race condition
   }, [open, imageUrl, sectionId, points, badgeRightEdges])
 
   return (
