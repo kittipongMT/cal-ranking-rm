@@ -67,47 +67,68 @@ export default function SectionCard({
     setAddOpen(false)
   }
 
+  const isEmpty = values.every((v) => !v)
+
   return (
     <div className="flex flex-col rounded-[18px] bg-gradient-to-b from-[#0b0b0b] to-[#101010]
       border border-[rgba(223,205,128,0.22)] shadow-[0_10px_30px_rgba(0,0,0,0.55)]
       p-3 min-h-0">
 
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+      <div className="flex items-center gap-2 mb-2.5 flex-shrink-0">
         <span className="text-[#dfcd80] font-bold text-[17px]">{label}</span>
         <span className="text-[12px] text-black bg-[#dfcd80] rounded-full px-[10px] py-[2px] font-bold">
           {badgeText}
         </span>
-
-        {/* Import button */}
-        <button
-          type="button"
-          onClick={() => onImport(sectionId)}
-          disabled={isImporting}
-          className="ml-auto flex items-center gap-1.5 h-7 px-[10px] rounded-full
-            border border-[rgba(223,205,128,0.55)] bg-[rgba(223,205,128,0.10)]
-            text-[#dfcd80] font-extrabold text-[12px] cursor-pointer
-            hover:bg-[rgba(223,205,128,0.16)] active:scale-[0.98] transition-all
-            disabled:opacity-50 disabled:cursor-wait"
-        >
-          <CameraIcon />
-          Import
-        </button>
-
-        {/* Add car button */}
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1 h-7 px-[10px] rounded-full
-            border border-[rgba(223,205,128,0.55)] bg-[rgba(223,205,128,0.10)]
-            text-[#dfcd80] font-extrabold text-[12px] cursor-pointer
-            hover:bg-[rgba(223,205,128,0.16)] active:scale-[0.98] transition-all"
+          className="ml-auto flex items-center gap-1 h-6 px-[8px] rounded-full
+            border border-[rgba(223,205,128,0.35)] bg-transparent
+            text-[#dfcd80]/60 text-[11px] cursor-pointer
+            hover:bg-[rgba(223,205,128,0.10)] hover:text-[#dfcd80] active:scale-[0.97] transition-all"
         >
-          + Add
+          + รถ
         </button>
       </div>
 
-      {/* Car rows */}
+      {/* Import area */}
+      {isImporting ? (
+        <div className="mb-3 flex-shrink-0 rounded-xl border border-[rgba(223,205,128,0.25)]
+          bg-[rgba(223,205,128,0.05)] px-3 py-2.5">
+          <div className="flex items-center justify-between text-[#dfcd80] text-xs font-bold mb-2">
+            <span>กำลังอ่านแต้มจากรูป...</span>
+            <span className="inline-block w-3.5 h-3.5 border-2 border-[#dfcd80]/30
+              border-t-[#dfcd80] rounded-full animate-spin" />
+          </div>
+          <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-full w-2/3 bg-gradient-to-r from-[#dfcd80]/60 to-[#dfcd80]
+              rounded-full animate-pulse" />
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onImport(sectionId)}
+          className="mb-3 flex-shrink-0 w-full flex items-center justify-center gap-2
+            py-2.5 rounded-xl border border-dashed border-[rgba(223,205,128,0.4)]
+            bg-[rgba(223,205,128,0.04)] text-[#dfcd80] font-bold text-[13px]
+            hover:bg-[rgba(223,205,128,0.10)] hover:border-[rgba(223,205,128,0.65)]
+            active:scale-[0.99] transition-all cursor-pointer"
+        >
+          <CameraIcon />
+          Import จากรูปเกม
+        </button>
+      )}
+
+      {/* Empty hint — shown above rows when no data yet */}
+      {isEmpty && !isImporting && (
+        <p className="text-[12px] text-center text-zinc-600 mb-2 leading-relaxed flex-shrink-0">
+          กด <span className="text-[#dfcd80]/50 font-semibold">Import</span> หรือพิมพ์แต้มด้านล่าง
+        </p>
+      )}
+
+      {/* Car rows — always visible */}
       <div className="flex flex-col gap-[10px] overflow-auto section-scroll min-h-0 pr-1">
         {values.map((val, i) => (
           <CarRow

@@ -5,19 +5,20 @@ export const STEP_POINTS = 200
 export interface Hat {
   name: string
   steps: number
+  image: string
 }
 
 export const hats: Hat[] = [
-  { name: 'หมวกเทา', steps: 5 },
-  { name: 'หมวกเขียวอ่อน', steps: 10 },
-  { name: 'หมวกเขียวเข้ม', steps: 10 },
-  { name: 'หมวกฟ้า', steps: 20 },
-  { name: 'หมวกม่วง', steps: 25 },
-  { name: 'หมวกทอง', steps: 25 },
-  { name: 'หมวกส้ม', steps: 25 },
-  { name: 'หมวกแดง', steps: 25 },
-  { name: 'หมวกแดงทอง', steps: 50 },
-  { name: 'หมวกเขียวทอง', steps: 50 },
+  { name: 'หมวกเทา', steps: 5, image: 'rank1.png' },
+  { name: 'หมวกเขียวอ่อน', steps: 10, image: 'rank2.png' },
+  { name: 'หมวกเขียวเข้ม', steps: 10, image: 'rank3.png' },
+  { name: 'หมวกฟ้า', steps: 20, image: 'rank4.png' },
+  { name: 'หมวกม่วง', steps: 25, image: 'rank5.png' },
+  { name: 'หมวกทอง', steps: 25, image: 'rank6.png' },
+  { name: 'หมวกส้ม', steps: 25, image: 'rank7.png' },
+  { name: 'หมวกแดง', steps: 25, image: 'rank8.png' },
+  { name: 'หมวกแดงทอง', steps: 50, image: 'rank9.png' },
+  { name: 'หมวกเขียวทอง', steps: 50, image: 'rank10.png' },
 ]
 
 export interface SectionDef {

@@ -1,10 +1,11 @@
 // src/App.tsx
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SectionCard from './components/SectionCard'
 import SummaryCard from './components/SummaryCard'
 import AuthButton from './components/AuthButton'
 import OcrDebugModal from './components/OcrDebugModal'
 import { sections } from './config'
+import logoUrl from './images/image.png'
 import type { SectionId } from './config'
 import type { AppState, CalcResult } from './types'
 import { loadState, saveStateToStorage, emptyState } from './lib/storage'
@@ -34,6 +35,15 @@ export default function App() {
 
   const userRef = useRef<User | null>(null)
   userRef.current = user
+
+  // Per-section point totals for the summary card
+  const sectionTotals = useMemo(() => {
+    const out = {} as Record<SectionId, number>
+    for (const sec of sections) {
+      out[sec.id] = state.sections[sec.id].reduce((a, v) => a + (Number(v) || 0), 0)
+    }
+    return out
+  }, [state.sections])
 
   // Persist state on change
   function setState(updater: AppState | ((prev: AppState) => AppState)) {
@@ -147,25 +157,29 @@ export default function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="min-h-screen bg-black text-[#eaeaea] font-kanit flex justify-center
-      overflow-y-auto -webkit-overflow-scrolling-touch px-[14px] py-4">
+    <div className="min-h-screen bg-black text-[#eaeaea] font-kanit">
+      {/* Sticky top bar */}
+      <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-sm
+        border-b border-[rgba(223,205,128,0.12)]">
+        <div className="max-w-[1320px] mx-auto px-4 py-2.5 flex items-center gap-3">
+          <img src={logoUrl} alt="Racing Master" className="w-8 h-8 rounded-lg object-cover" />
+          <div className="flex flex-col leading-tight">
+            <span className="text-[#dfcd80] font-bold text-sm tracking-wide">Racing Master</span>
+            <span className="text-zinc-500 text-[11px]">คำนวณแต้มจัดอันดับ</span>
+          </div>
+          <div className="ml-auto">
+            <AuthButton
+              user={user}
+              onSignIn={() => signInGoogle().catch(console.error)}
+              onSignOut={() => signOutUser().catch(console.error)}
+            />
+          </div>
+        </div>
+      </header>
 
-      <div className="w-full max-w-[1320px] flex flex-col">
-        {/* Auth button */}
-        <AuthButton
-          user={user}
-          onSignIn={() => signInGoogle().catch(console.error)}
-          onSignOut={() => signOutUser().catch(console.error)}
-        />
-
-        {/* Title */}
-        <h1 className="text-center text-[#dfcd80] text-[26px] font-bold tracking-[0.2px]
-          mt-1.5 mb-3">
-          คำนวณแต้มจัดอันดับ
-        </h1>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 flex-1 min-h-0">
+      <main className="max-w-[1320px] mx-auto px-3 py-4 flex flex-col gap-3">
+        {/* 3 section cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {sections.map((sec) => (
             <SectionCard
               key={sec.id}
@@ -179,17 +193,19 @@ export default function App() {
               onCalc={() => calc()}
             />
           ))}
-
-          <SummaryCard
-            bonus={state.bonus}
-            onBonusChange={(val) => setState((prev) => ({ ...prev, bonus: val }))}
-            onCalc={() => calc()}
-            onReset={resetUnlocked}
-            result={result}
-            isCalculating={isCalculating}
-          />
         </div>
-      </div>
+
+        {/* Summary — full width below sections */}
+        <SummaryCard
+          bonus={state.bonus}
+          sectionTotals={sectionTotals}
+          onBonusChange={(val) => setState((prev) => ({ ...prev, bonus: val }))}
+          onCalc={() => calc()}
+          onReset={resetUnlocked}
+          result={result}
+          isCalculating={isCalculating}
+        />
+      </main>
 
       {/* OCR Debug Modal */}
       {debugModal && (

@@ -11,6 +11,7 @@ export interface AppState {
 
 export interface RankResult {
   hat: string
+  image: string
   stepInHat: number
   inStep: number
   stepMax: number

@@ -13,7 +13,7 @@ export function pointsToRank(totalPoints: number): RankResult {
     const next = cum + h.steps
     if (totalStepsCompleted < next) {
       const stepInHat = totalStepsCompleted - cum + 1
-      return { hat: h.name, stepInHat, inStep, stepMax: STEP_POINTS, hatSteps: h.steps }
+      return { hat: h.name, image: h.image, stepInHat, inStep, stepMax: STEP_POINTS, hatSteps: h.steps }
     }
     cum = next
   }
@@ -21,6 +21,7 @@ export function pointsToRank(totalPoints: number): RankResult {
   const last = hats[hats.length - 1]
   return {
     hat: last.name,
+    image: last.image,
     stepInHat: last.steps,
     inStep: STEP_POINTS - 1,
     stepMax: STEP_POINTS,
