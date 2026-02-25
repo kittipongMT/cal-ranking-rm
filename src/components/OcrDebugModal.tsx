@@ -30,95 +30,107 @@ export default function OcrDebugModal({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (!open || !imageUrl || !canvasRef.current) return
+    if (!open || !imageUrl) return
 
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')!
-    const img = new Image()
+    let cancelled = false
 
-    img.onerror = (e) => console.error('[OcrDebug] image load failed', e)
-    img.onload = () => {
-      const maxW = Math.min(900, img.naturalWidth)
-      const scale = maxW / img.naturalWidth
-      canvas.width = maxW
-      canvas.height = img.naturalHeight * scale
+    // Defer one frame so the Dialog portal has time to mount the canvas into the DOM
+    const raf = requestAnimationFrame(() => {
+      if (cancelled || !canvasRef.current) return
 
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')!
+      const img = new Image()
 
-      const margin = Math.round(img.naturalWidth * 0.005) // same as ocr.ts
+      img.onerror = (e) => console.error('[OcrDebug] image load failed', e)
+      img.onload = () => {
+        if (cancelled) return
 
-      const boxes: OcrBox[] = OCR_BOXES[sectionId]
-      boxes.forEach((box, i) => {
-        const [bx, by, bw, bh] = box.pointBox
-        const color = SLOT_COLORS[i % SLOT_COLORS.length]
+        const maxW = Math.min(900, img.naturalWidth)
+        const scale = maxW / img.naturalWidth
+        canvas.width = maxW
+        canvas.height = img.naturalHeight * scale
 
-        // ── Search zone (full wide box) ── dashed yellow
-        const zx = bx * canvas.width
-        const zy = by * canvas.height
-        const zw = bw * canvas.width
-        const zh = bh * canvas.height
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-        ctx.save()
-        ctx.setLineDash([5, 4])
-        ctx.strokeStyle = '#ffee00'
-        ctx.lineWidth = 1.5
-        ctx.strokeRect(zx, zy, zw, zh)
-        ctx.restore()
+        const margin = Math.round(img.naturalWidth * 0.005) // same as ocr.ts
 
-        // ── Number crop zone (after badge) ── solid colored border
-        const badgeRX = badgeRightEdges[i]       // absolute X pixel in natural img
-        const searchSx = Math.round(img.naturalWidth * bx)
-        const searchSy = Math.round(img.naturalHeight * by)
-        const searchSw = Math.round(img.naturalWidth * bw)
-        const searchSh = Math.round(img.naturalHeight * bh)
+        const boxes: OcrBox[] = OCR_BOXES[sectionId]
+        boxes.forEach((box, i) => {
+          const [bx, by, bw, bh] = box.pointBox
+          const color = SLOT_COLORS[i % SLOT_COLORS.length]
 
-        const numStartX = badgeRX !== null && badgeRX !== undefined
-          ? badgeRX + margin
-          : searchSx + Math.round(searchSw * 0.65) // fallback: right 35%
-        const numEndX = searchSx + searchSw
-        const nw = Math.max(0, numEndX - numStartX)
+          // ── Search zone (full wide box) ── dashed yellow
+          const zx = bx * canvas.width
+          const zy = by * canvas.height
+          const zw = bw * canvas.width
+          const zh = bh * canvas.height
 
-        // Convert back to canvas-display coords
-        const nx = numStartX * scale
-        const ny = searchSy * scale
-        const nwDisplay = nw * scale
-        const nhDisplay = searchSh * scale
-
-        // Filled tint
-        ctx.fillStyle = color + '28'
-        ctx.fillRect(nx, ny, nwDisplay, nhDisplay)
-
-        // Solid border
-        ctx.strokeStyle = color
-        ctx.lineWidth = 2
-        ctx.strokeRect(nx, ny, nwDisplay, nhDisplay)
-
-        // Badge-end marker (vertical line)
-        if (badgeRX !== null && badgeRX !== undefined) {
-          const bLineX = (badgeRX + margin) * scale
           ctx.save()
-          ctx.strokeStyle = '#ff69b4'
+          ctx.setLineDash([5, 4])
+          ctx.strokeStyle = '#ffee00'
           ctx.lineWidth = 1.5
-          ctx.setLineDash([3, 3])
-          ctx.beginPath()
-          ctx.moveTo(bLineX, ny)
-          ctx.lineTo(bLineX, ny + nhDisplay)
-          ctx.stroke()
+          ctx.strokeRect(zx, zy, zw, zh)
           ctx.restore()
-        }
 
-        // Label: "#N: value" above the number zone
-        const label = `#${i + 1}: ${points[i] || '❌'}`
-        ctx.font = 'bold 13px monospace'
-        const tw = ctx.measureText(label).width
-        ctx.fillStyle = 'rgba(0,0,0,0.8)'
-        ctx.fillRect(nx, ny - 21, tw + 8, 20)
-        ctx.fillStyle = color
-        ctx.fillText(label, nx + 4, ny - 6)
-      })
-    }
+          // ── Number crop zone (after badge) ── solid colored border
+          const badgeRX = badgeRightEdges[i]
+          const searchSx = Math.round(img.naturalWidth * bx)
+          const searchSy = Math.round(img.naturalHeight * by)
+          const searchSw = Math.round(img.naturalWidth * bw)
+          const searchSh = Math.round(img.naturalHeight * bh)
 
-    img.src = imageUrl   // set AFTER onload to avoid race condition
+          const numStartX = badgeRX !== null && badgeRX !== undefined
+            ? badgeRX + margin
+            : searchSx + Math.round(searchSw * 0.65) // fallback: right 35%
+          const numEndX = searchSx + searchSw
+          const nw = Math.max(0, numEndX - numStartX)
+
+          // Convert back to canvas-display coords
+          const nx = numStartX * scale
+          const ny = searchSy * scale
+          const nwDisplay = nw * scale
+          const nhDisplay = searchSh * scale
+
+          // Filled tint
+          ctx.fillStyle = color + '28'
+          ctx.fillRect(nx, ny, nwDisplay, nhDisplay)
+
+          // Solid border
+          ctx.strokeStyle = color
+          ctx.lineWidth = 2
+          ctx.strokeRect(nx, ny, nwDisplay, nhDisplay)
+
+          // Badge-end marker (vertical line)
+          if (badgeRX !== null && badgeRX !== undefined) {
+            const bLineX = (badgeRX + margin) * scale
+            ctx.save()
+            ctx.strokeStyle = '#ff69b4'
+            ctx.lineWidth = 1.5
+            ctx.setLineDash([3, 3])
+            ctx.beginPath()
+            ctx.moveTo(bLineX, ny)
+            ctx.lineTo(bLineX, ny + nhDisplay)
+            ctx.stroke()
+            ctx.restore()
+          }
+
+          // Label: "#N: value" above the number zone
+          const label = `#${i + 1}: ${points[i] || '❌'}`
+          ctx.font = 'bold 13px monospace'
+          const tw = ctx.measureText(label).width
+          ctx.fillStyle = 'rgba(0,0,0,0.8)'
+          ctx.fillRect(nx, ny - 21, tw + 8, 20)
+          ctx.fillStyle = color
+          ctx.fillText(label, nx + 4, ny - 6)
+        })
+      }
+
+      // Set src AFTER onload is attached
+      img.src = imageUrl
+    })
+
+    return () => { cancelled = true; cancelAnimationFrame(raf) }
   }, [open, imageUrl, sectionId, points, badgeRightEdges])
 
   return (
