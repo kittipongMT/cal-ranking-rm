@@ -140,10 +140,10 @@ export default function OcrDebugModal({
         <Dialog.Content
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50
             w-[95vw] max-w-5xl max-h-[90vh] flex flex-col
-            rounded-2xl border border-[rgba(223,205,128,0.3)] bg-zinc-900 shadow-2xl overflow-hidden"
+            rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden"
         >
           <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 flex-shrink-0 gap-4">
-            <Dialog.Title className="text-[#dfcd80] font-bold text-lg whitespace-nowrap">
+            <Dialog.Title className="text-white font-bold text-lg whitespace-nowrap">
               OCR Debug — {sectionId.toUpperCase()}
             </Dialog.Title>
             <Dialog.Description className="text-zinc-500 text-xs text-center flex-1">

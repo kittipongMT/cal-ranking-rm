@@ -14,8 +14,8 @@ export default function AuthButton({ user, onSignIn, onSignOut }: AuthButtonProp
       type="button"
       onClick={user ? onSignOut : onSignIn}
       className="flex items-center gap-2
-        h-8 px-3 rounded-[10px] bg-[#dfcd80] text-black font-bold text-xs
-        cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
+        h-8 px-3 rounded-[8px] bg-[#e60a3d] text-white font-bold text-xs
+        cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all"
     >
       <GoogleIcon className="w-3.5 h-3.5 flex-shrink-0" />
       <span className="max-w-[120px] truncate">

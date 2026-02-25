@@ -6,6 +6,7 @@ import AuthButton from './components/AuthButton'
 import OcrDebugModal from './components/OcrDebugModal'
 import { sections } from './config'
 import logoUrl from './images/image.png'
+import rmBgUrl from './images/rm-bg.jpg'
 import type { SectionId } from './config'
 import type { AppState, CalcResult } from './types'
 import { loadState, saveStateToStorage, emptyState, normalizeState } from './lib/storage'
@@ -199,15 +200,26 @@ export default function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="min-h-screen bg-black text-[#eaeaea] font-kanit">
+    <div
+      className="min-h-screen text-[#eaeaea] font-kanit relative"
+      style={{
+        backgroundImage: `url(${rmBgUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundAttachment: 'fixed',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark overlay so content stays readable */}
+      <div className="fixed inset-0 bg-black/80 -z-10" />
       {/* Sticky top bar */}
       <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-sm
-        border-b border-[rgba(223,205,128,0.12)]">
-        <div className="max-w-[1320px] mx-auto px-4 py-2.5 flex items-center gap-3">
+        border-b border-white/[0.08]">
+        <div className="max-w-[1320px] mx-auto px-4 py-2 flex items-center gap-3">
           <img src={logoUrl} alt="Racing Master" className="w-8 h-8 rounded-lg object-cover" />
           <div className="flex flex-col leading-tight">
-            <span className="text-[#dfcd80] font-bold text-sm tracking-wide">Racing Master</span>
-            <span className="text-zinc-500 text-[11px]">คำนวณแต้มจัดอันดับ</span>
+            <span className="text-white font-extrabold text-sm tracking-widest uppercase">Racing Master</span>
+            <span className="text-zinc-500 text-[10px] tracking-wider">Ranking Calculator</span>
           </div>
           <div className="ml-auto">
             <AuthButton

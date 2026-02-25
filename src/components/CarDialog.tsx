@@ -45,10 +45,10 @@ export default function CarDialog({
         <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50" />
         <Dialog.Content
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50
-            w-[90vw] max-w-sm rounded-2xl border border-[rgba(223,205,128,0.3)]
+            w-[90vw] max-w-sm rounded-xl border border-zinc-700
             bg-zinc-900 p-6 shadow-2xl"
         >
-          <Dialog.Title className="text-[#dfcd80] font-bold text-lg mb-1">
+          <Dialog.Title className="text-white font-bold text-lg mb-1">
             {title}
           </Dialog.Title>
           <Dialog.Description className="text-zinc-400 text-sm mb-4">
@@ -60,7 +60,7 @@ export default function CarDialog({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKey}
-            className="w-full h-11 rounded-xl border-2 border-[#dfcd80] bg-white
+            className="w-full h-11 rounded border-2 border-zinc-500 bg-white
               text-black font-bold text-base px-3 outline-none"
             placeholder="ชื่อรถ..."
           />
@@ -68,16 +68,16 @@ export default function CarDialog({
           <div className="flex gap-3 mt-4">
             <button
               onClick={handleConfirm}
-              className="flex-1 h-11 rounded-xl bg-[#dfcd80] text-black font-extrabold
-                text-base hover:brightness-105 active:scale-[0.985] transition-all"
+              className="flex-1 h-11 rounded bg-[#e60a3d] text-white font-extrabold
+                text-base hover:brightness-110 active:scale-[0.985] transition-all"
             >
               ตกลง
             </button>
             <button
               onClick={onCancel}
-              className="flex-1 h-11 rounded-xl border border-[rgba(223,205,128,0.55)]
-                text-[#dfcd80] font-extrabold text-base bg-transparent
-                hover:bg-[rgba(223,205,128,0.08)] active:scale-[0.985] transition-all"
+              className="flex-1 h-11 rounded border border-zinc-700
+                text-zinc-400 font-extrabold text-base bg-transparent
+                hover:bg-zinc-800 hover:text-zinc-200 active:scale-[0.985] transition-all"
             >
               ยกเลิก
             </button>

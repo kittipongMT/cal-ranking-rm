@@ -18,10 +18,10 @@ export default function CarSelect({
     <Select.Root value={value || '__none__'} onValueChange={(v) => onChange(v === '__none__' ? '' : v)}>
       <Select.Trigger
         className="flex-1 min-w-0 flex items-center justify-between gap-1 h-10 px-3
-          rounded-xl border border-[rgba(223,205,128,0.65)] bg-black/25
-          text-[#dfcd80] font-kanit font-bold text-sm outline-none
-          focus:border-[#dfcd80] focus:ring-2 focus:ring-[rgba(223,205,128,0.15)]
-          data-[placeholder]:text-[rgba(223,205,128,0.5)]
+          rounded border border-zinc-700 bg-black/25
+          text-zinc-200 font-kanit font-bold text-sm outline-none
+          focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700/30
+          data-[placeholder]:text-zinc-500
           truncate cursor-pointer"
         aria-label="เลือกรถ"
       >
@@ -37,12 +37,12 @@ export default function CarSelect({
         <Select.Content
           position="popper"
           sideOffset={4}
-          className="z-50 min-w-[180px] max-h-60 overflow-auto rounded-xl
-            border border-[rgba(223,205,128,0.3)] bg-zinc-900 shadow-2xl
+          className="z-50 min-w-[180px] max-h-60 overflow-auto rounded
+            border border-zinc-700 bg-zinc-900 shadow-2xl
             data-[state=open]:animate-in data-[state=closed]:animate-out
             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         >
-          <Select.ScrollUpButton className="flex items-center justify-center h-6 text-[#dfcd80]">
+          <Select.ScrollUpButton className="flex items-center justify-center h-6 text-zinc-400">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7 14l5-5 5 5z" />
             </svg>
@@ -62,9 +62,9 @@ export default function CarSelect({
               <Select.Item
                 key={name}
                 value={name}
-                className="flex items-center px-3 py-2 rounded-lg text-sm
-                  text-[#dfcd80] cursor-pointer outline-none select-none
-                  data-[highlighted]:bg-zinc-800 data-[state=checked]:font-bold"
+                className="flex items-center px-3 py-2 rounded text-sm
+                  text-zinc-200 cursor-pointer outline-none select-none
+                  data-[highlighted]:bg-zinc-800 data-[highlighted]:text-white data-[state=checked]:font-bold"
               >
                 <Select.ItemIndicator className="mr-2">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -76,7 +76,7 @@ export default function CarSelect({
             ))}
           </Select.Viewport>
 
-          <Select.ScrollDownButton className="flex items-center justify-center h-6 text-[#dfcd80]">
+          <Select.ScrollDownButton className="flex items-center justify-center h-6 text-zinc-400">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7 10l5 5 5-5z" />
             </svg>

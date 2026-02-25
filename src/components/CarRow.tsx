@@ -61,7 +61,7 @@ export default function CarRow({
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onCalc()}
-          className="w-[130px] flex-shrink-0 h-10 rounded-xl border-2 border-[#dfcd80]
+          className="w-[130px] flex-shrink-0 h-10 rounded border-2 border-zinc-500
             bg-white text-black font-extrabold text-base text-center px-2 outline-none
             placeholder:text-gray-400 placeholder:font-semibold
             [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
@@ -74,11 +74,11 @@ export default function CarRow({
             <button
               type="button"
               onClick={onToggleLock}
-              className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center
+              className={`w-10 h-10 flex-shrink-0 rounded flex items-center justify-center
                 cursor-pointer transition-all active:scale-[0.97]
                 ${
                   isLocked
-                    ? 'border border-[rgba(223,205,128,0.65)] bg-[rgba(223,205,128,0.12)] text-[#dfcd80]'
+                    ? 'border border-zinc-500 bg-zinc-800 text-zinc-200'
                     : 'border border-white/20 bg-transparent text-white/80 hover:bg-white/5'
                 }`}
             >
@@ -100,11 +100,11 @@ export default function CarRow({
         {isOcrCar ? (
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <div className="flex-1 min-w-0 h-10 rounded-xl border border-[rgba(223,205,128,0.35)]
-                bg-[rgba(223,205,128,0.06)] text-[#dfcd80] text-sm font-semibold
+              <div className="flex-1 min-w-0 h-10 rounded border border-zinc-700
+                bg-zinc-900/50 text-zinc-300 text-sm font-semibold
                 flex items-center px-3 overflow-hidden cursor-default select-none">
                 <span className="truncate">{carValue || `รถ #${index + 1}`}</span>
-                <span className="ml-auto text-[10px] text-[#dfcd80]/40 flex-shrink-0 pl-2">OCR</span>
+                <span className="ml-auto text-[10px] text-zinc-600 flex-shrink-0 pl-2">OCR</span>
               </div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
@@ -129,10 +129,10 @@ export default function CarRow({
                 <button
                   type="button"
                   onClick={() => setEditOpen(true)}
-                  className="w-10 h-10 flex-shrink-0 rounded-xl border border-[rgba(223,205,128,0.55)]
-                    bg-[rgba(223,205,128,0.10)] text-[#dfcd80]
+                  className="w-10 h-10 flex-shrink-0 rounded border border-zinc-700
+                    bg-zinc-900/50 text-zinc-400
                     flex items-center justify-center cursor-pointer
-                    hover:bg-[rgba(223,205,128,0.18)] active:scale-[0.97] transition-all"
+                    hover:bg-zinc-800 hover:text-zinc-200 active:scale-[0.97] transition-all"
                 >
                   <PencilIcon />
                 </button>
