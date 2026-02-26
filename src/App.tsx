@@ -5,6 +5,7 @@ import SummaryCard from './components/SummaryCard'
 import AuthButton from './components/AuthButton'
 import OcrDebugModal from './components/OcrDebugModal'
 import ScorePage from './components/ScorePage'
+import ComparePage from './components/ComparePage'
 import { sections } from './config'
 import logoUrl from './images/image.png'
 import rmBgUrl from './images/rm-bg.jpg'
@@ -29,7 +30,7 @@ export default function App() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [importingSection, setImportingSection] = useState<SectionId | null>(null)
   const [user, setUser] = useState<User | null>(null)
-  const [page, setPage] = useState<'ranking' | 'score'>('ranking')
+  const [page, setPage] = useState<'ranking' | 'score' | 'compare'>('ranking')
   const [debugModal, setDebugModal] = useState<{
     imageUrl: string
     sectionId: SectionId
@@ -249,6 +250,18 @@ export default function App() {
             >
               Score
             </button>
+            <button
+              type="button"
+              onClick={() => setPage('compare')}
+              className={`h-7 px-3 text-xs font-bold uppercase tracking-wider rounded transition-all
+                ${
+                  page === 'compare'
+                    ? 'bg-[#e60a3d] text-white'
+                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
+                }`}
+            >
+              Compare
+            </button>
           </nav>
           <div className="ml-auto">
             <AuthButton
@@ -263,6 +276,10 @@ export default function App() {
       {page === 'score' ? (
         <div className="flex-1">
           <ScorePage />
+        </div>
+      ) : page === 'compare' ? (
+        <div className="flex-1">
+          <ComparePage />
         </div>
       ) : (
       <main className="max-w-[1320px] mx-auto px-3 py-4 flex flex-col gap-3">
