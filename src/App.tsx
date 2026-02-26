@@ -263,13 +263,7 @@ export default function App() {
               Compare
             </button>
           </nav>
-          <div className="ml-auto">
-            <AuthButton
-              user={user}
-              onSignIn={() => signInGoogle().catch(console.error)}
-              onSignOut={() => signOutUser().catch(console.error)}
-            />
-          </div>
+
         </div>
       </header>
 
